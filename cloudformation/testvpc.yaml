@@ -1,0 +1,172 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Two VPCs with Private Subnets
+
+Resources:
+  VPC1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.1.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: VPC1
+
+  InternetGatewayVPC1:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGatewayVPC1
+
+  VPC1GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC1
+      InternetGatewayId: !Ref InternetGatewayVPC1
+
+  PrivateSubnetVPC1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      CidrBlock: 192.168.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: PrivateSubnetVPC1
+
+  PublicSubnetVPC1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC1
+      CidrBlock: 192.168.3.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnetVPC1
+
+  PublicRouteTableVPC1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC1
+      Tags:
+        - Key: Name
+          Value: PublicRouteTableVPC1
+
+  PublicRouteVPC1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTableVPC1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPC1
+
+  RouteTableAssociationVPC1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetVPC1
+      RouteTableId: !Ref PublicRouteTableVPC1
+
+  VPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: VPC2
+
+  InternetGatewayVPC2:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGatewayVPC2
+
+  VPC2GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC2
+      InternetGatewayId: !Ref InternetGatewayVPC2
+
+  PrivateSubnetVPC2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: PrivateSubnetVPC2
+
+  PublicSubnetVPC2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC2
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnetVPC2
+
+  PublicRouteTableVPC2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC2
+      Tags:
+        - Key: Name
+          Value: PublicRouteTableVPC2
+
+  PublicRouteVPC2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTableVPC2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayVPC2
+
+  RouteTableAssociationVPC2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetVPC2
+      RouteTableId: !Ref PublicRouteTableVPC2
+
+Outputs:
+  VPC1Id:
+    Description: "VPC1 ID"
+    Value: !Ref VPC1
+    Export:
+      Name: "VPC1-ID"
+
+  PrivateSubnetIdVPC1:
+    Description: "Private Subnet ID for VPC1"
+    Value: !Ref PrivateSubnetVPC1
+    Export:
+      Name: "PRI-SUBNET-VPC1-ID"
+
+  PublicSubnetIdVPC1:
+    Description: "Public Subnet ID for VPC1"
+    Value: !Ref PublicSubnetVPC1
+    Export:
+      Name: "PUB-SUBNET-VPC1-ID"
+
+  VPC2Id:
+    Description: "VPC2 ID"
+    Value: !Ref VPC2
+    Export:
+      Name: "VPC2-ID"
+
+  PrivateSubnetIdVPC2:
+    Description: "Private Subnet ID for VPC2"
+    Value: !Ref PrivateSubnetVPC2
+    Export:
+      Name: "PRI-SUBNET-VPC2-ID"
+
+  PublicSubnetIdVPC2:
+    Description: "Public Subnet ID for VPC2"
+    Value: !Ref PublicSubnetVPC2
+    Export:
+      Name: "PUB-SUBNET-VPC2-ID"

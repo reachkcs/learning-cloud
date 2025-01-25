@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create an Interface VPC Endpoint for API Gateway with hard-coded values"
+
+Resources:
+  ApiGatewayInterfaceEndpoint:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      ServiceName: "com.amazonaws.us-east-1.execute-api" # Replace with your region if different
+      VpcId: !ImportValue VPC1-ID
+      SubnetIds:
+        - !ImportValue PRI-SUBNET-VPC1-ID
+      SecurityGroupIds:
+        - "sg-0f2fff2d93d63c0a9"                       # Hard-coded Security Group ID
+      VpcEndpointType: "Interface"
+      PrivateDnsEnabled: true
+      Tags:
+        - Key: "Name"
+          Value: "ApiGatewayEndpoint"
+
+Outputs:
+  VpcEndpointId:
+    Description: "The ID of the VPC endpoint"
+    Value: !Ref ApiGatewayInterfaceEndpoint

@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create a Transit Gateway and attach it to two VPCs.
+
+Resources:
+  # Transit Gateway
+  TESTTransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: Transit Gateway for VPC1 and VPC2
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      AutoAcceptSharedAttachments: enable
+      DnsSupport: enable
+      VpnEcmpSupport: enable
+      Tags:
+        - Key: Name
+          Value: TESTTransitGateway
+
+  # Transit Gateway Attachment for VPC1
+  TransitGatewayAttachmentVPC1:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TESTTransitGateway
+      VpcId: !ImportValue VPC1-ID
+      SubnetIds:
+        - !ImportValue PUB-SUBNET-VPC1-ID
+      Tags:
+        - Key: Name
+          Value: TransitGatewayAttachmentVPC1
+
+  # Transit Gateway Attachment for VPC2
+  TransitGatewayAttachmentVPC2:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TESTTransitGateway
+      VpcId: !ImportValue VPC2-ID
+      SubnetIds:
+        - !ImportValue PUB-SUBNET-VPC2-ID
+      Tags:
+        - Key: Name
+          Value: TransitGatewayAttachmentVPC2
+
+Outputs:
+  TransitGatewayId:
+    Description: ID of the Transit Gateway
+    Value: !Ref TESTTransitGateway
+
+  TransitGatewayAttachmentVPC1Id:
+    Description: Transit Gateway Attachment ID for VPC1
+    Value: !Ref TransitGatewayAttachmentVPC1
+
+  TransitGatewayAttachmentVPC2Id:
+    Description: Transit Gateway Attachment ID for VPC2
+    Value: !Ref TransitGatewayAttachmentVPC2

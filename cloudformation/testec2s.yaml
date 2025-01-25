@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create two free-tier EC2 instances, a key pair, and a security group.
+
+Resources:
+  # SSH Key Pair
+  KCSKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: KCSKEYPAIR
+      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
+
+  # Security Group Open to SSH
+  GlobalSecurityGroupVPC1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from anywhere
+      VpcId: !ImportValue VPC1-ID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 70.106.201.186/32
+
+  # EC2 Instance in VPC1
+  EC2Instance1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref GlobalSecurityGroupVPC1
+      SubnetId: !ImportValue PUB-SUBNET-VPC1-ID
+      ImageId: ami-0c02fb55956c7d316 # Amazon Linux 2 AMI (Free Tier Eligible)
+      Tags:
+        - Key: Name
+          Value: EC2-VPC1
+
+  # Security Group for private EC2
+  SecurityGroupVPC1Priv:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from 192.168.0.0/16
+      VpcId: !ImportValue VPC1-ID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 192.168.0.0/16
+
+  # Private EC2 Instance in VPC1
+  EC2Instance1Priv:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref SecurityGroupVPC1Priv
+      SubnetId: !ImportValue PRI-SUBNET-VPC1-ID
+      ImageId: ami-0c02fb55956c7d316 # Amazon Linux 2 AMI (Free Tier Eligible)
+      Tags:
+        - Key: Name
+          Value: Priv-EC2-VPC1
+
+  # Security Group Open to SSH
+  GlobalSecurityGroupVPC2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from anywhere
+      VpcId: !ImportValue VPC2-ID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  # EC2 Instance in VPC2
+  EC2Instance2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref GlobalSecurityGroupVPC2
+      SubnetId: !ImportValue PUB-SUBNET-VPC2-ID
+      ImageId: ami-0c02fb55956c7d316 # Amazon Linux 2 AMI (Free Tier Eligible)
+      Tags:
+        - Key: Name
+          Value: EC2-VPC2
+
+Outputs:
+  EC2Instance1PublicDNS:
+    Description: Public DNS of the first EC2 instance
+    Value: !GetAtt EC2Instance1.PublicDnsName
+
+  EC2Instance2PublicDNS:
+    Description: Public DNS of the second EC2 instance
+    Value: !GetAtt EC2Instance2.PublicDnsName
+
+  KeyName:
+    Description: Name of the created key pair
+    Value: !Ref KCSKeyPair
