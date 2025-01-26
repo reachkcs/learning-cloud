@@ -1,0 +1,33 @@
+set -o vi
+export WORK_DIR='/Users/aags/Documents/Sreedhar/work'
+export PATH=/opt/homebrew/opt/postgresql@15/bin:${WORK_DIR}/bin:~/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}
+
+# General
+
+alias wdir='cd "${WORK_DIR}"'
+alias sshagent='eval "$(ssh-agent -s)"'
+alias sshadd='ssh-add ~/.ssh/id_rsa'
+
+
+# Terraform Related
+export TF_CLI_ARGS_apply="-auto-approve"
+export TF_PLUGIN_CACHE_DIR="$HOME/.terraform.d/plugin-cache"
+alias tdir='cd Documents/Sreedhar/terraform'
+
+# AWS Related
+
+alias aws1='export AWS_PROFILE=KCS-Personal'
+alias aws3='export AWS_PROFILE=TF_PROD'
+alias aws4='export AWS_PROFILE=TF_TEST'
+
+# K8s Related
+
+alias start_minikube='minikube start --driver=docker'
+alias start_minikube_specific_version='minikube start --driver=docker --kubernetes-version=v1.22.0'
+alias status_minikube='minikube status'
+alias dashboard_minikube='minikube dashboard'
+alias update_minikube='brew update && brew upgrade minikube'
+alias service_minikube='minikube service nginx --url'
+alias ip_minikube='minikube ip'
+alias install_ingress_addon='minikube addons enable ingress'
+

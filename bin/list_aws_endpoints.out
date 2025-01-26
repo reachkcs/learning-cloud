@@ -1,0 +1,115 @@
+Fetching all VPC endpoints and their details...
+
+VPC Endpoint Details:
+Working on the endpoint PS3-EPT (Service name: com.amazonaws.us-east-1.s3, Endpoint type: Gateway)
+  Network interfaces: <>
+Working on the endpoint PINSPECTOR-EPT (Service name: com.amazonaws.us-east-1.inspector2, Endpoint type: Interface)
+  Network interfaces: <eni-01f97206491c612ca eni-009a8506d62380ede>
+    Interface: <eni-01f97206491c612ca> Its IP: 10.191.118.153
+    Interface: <eni-009a8506d62380ede> Its IP: 10.191.118.111
+Working on the endpoint PSQS-EPT (Service name: com.amazonaws.us-east-1.sqs, Endpoint type: Interface)
+  Network interfaces: <eni-05a34ca678e155dd2 eni-01eeb9801f7e81fcb>
+    Interface: <eni-05a34ca678e155dd2> Its IP: 10.191.118.107
+    Interface: <eni-01eeb9801f7e81fcb> Its IP: 10.191.118.137
+Working on the endpoint PSECRETSMANAGER-EPT (Service name: com.amazonaws.us-east-1.secretsmanager, Endpoint type: Interface)
+  Network interfaces: <eni-04e61db4db96439d9 eni-0d1a9f89aa0663f43>
+    Interface: <eni-04e61db4db96439d9> Its IP: 10.191.118.147
+    Interface: <eni-0d1a9f89aa0663f43> Its IP: 10.191.118.125
+Working on the endpoint PKMS-EPT (Service name: com.amazonaws.us-east-1.kms, Endpoint type: Interface)
+  Network interfaces: <eni-0e2105bf1c113176d eni-07b4c0fb0590071c9>
+    Interface: <eni-0e2105bf1c113176d> Its IP: 10.191.118.154
+    Interface: <eni-07b4c0fb0590071c9> Its IP: 10.191.118.120
+Working on the endpoint PSECURITYHUB-EPT (Service name: com.amazonaws.us-east-1.securityhub, Endpoint type: Interface)
+  Network interfaces: <eni-0442d88f644fc5d21 eni-052ba922daf597eb2>
+    Interface: <eni-0442d88f644fc5d21> Its IP: 10.191.118.146
+    Interface: <eni-052ba922daf597eb2> Its IP: 10.191.118.117
+Working on the endpoint PCLOUDFORMATION-EPT (Service name: com.amazonaws.us-east-1.cloudformation, Endpoint type: Interface)
+  Network interfaces: <eni-0b20ad601abc868f4 eni-077c35ab822e4ffd1>
+    Interface: <eni-0b20ad601abc868f4> Its IP: 10.191.118.138
+    Interface: <eni-077c35ab822e4ffd1> Its IP: 10.191.118.119
+Working on the endpoint PSTS-EPT (Service name: com.amazonaws.us-east-1.sts, Endpoint type: Interface)
+  Network interfaces: <eni-03bd334b1a12d5953 eni-015aba229ef04a6a2>
+    Interface: <eni-03bd334b1a12d5953> Its IP: 10.191.118.148
+    Interface: <eni-015aba229ef04a6a2> Its IP: 10.191.118.104
+Working on the endpoint PECRAPI-EPT (Service name: com.amazonaws.us-east-1.ecr.api, Endpoint type: Interface)
+  Network interfaces: <eni-0bb093d0d417e141f eni-0c401d9d20724ae0d>
+    Interface: <eni-0bb093d0d417e141f> Its IP: 10.191.118.157
+    Interface: <eni-0c401d9d20724ae0d> Its IP: 10.191.118.101
+Working on the endpoint PECRDKR-EPT (Service name: com.amazonaws.us-east-1.ecr.dkr, Endpoint type: Interface)
+  Network interfaces: <eni-064b3b11e3d2fc68d eni-0e9412d12e26f5c75>
+    Interface: <eni-064b3b11e3d2fc68d> Its IP: 10.191.118.155
+    Interface: <eni-0e9412d12e26f5c75> Its IP: 10.191.118.109
+Working on the endpoint PGUARDDUTY-EPT (Service name: com.amazonaws.us-east-1.guardduty, Endpoint type: Interface)
+  Network interfaces: <eni-03b6a736528f77132 eni-077eefe54ad5eb8d1>
+    Interface: <eni-03b6a736528f77132> Its IP: 10.191.118.143
+    Interface: <eni-077eefe54ad5eb8d1> Its IP: 10.191.118.126
+Working on the endpoint PCLOUDWATCH-EPT (Service name: com.amazonaws.us-east-1.logs, Endpoint type: Interface)
+  Network interfaces: <eni-04e4c867192264289 eni-06f1c3bf6e8d0ace7>
+    Interface: <eni-04e4c867192264289> Its IP: 10.191.118.110
+    Interface: <eni-06f1c3bf6e8d0ace7> Its IP: 10.191.118.152
+Working on the endpoint PEC2-EPT (Service name: com.amazonaws.us-east-1.ec2, Endpoint type: Interface)
+  Network interfaces: <eni-0f6531fa12ae82ad0 eni-05f77173703a46df4>
+    Interface: <eni-0f6531fa12ae82ad0> Its IP: 10.191.118.123
+    Interface: <eni-05f77173703a46df4> Its IP: 10.191.118.139
+Working on the endpoint PSNS-EPT (Service name: com.amazonaws.us-east-1.sns, Endpoint type: Interface)
+  Network interfaces: <eni-03ae500d97a302b80 eni-00008985ffb1b62fa>
+    Interface: <eni-03ae500d97a302b80> Its IP: 10.191.118.116
+    Interface: <eni-00008985ffb1b62fa> Its IP: 10.191.118.158
+Working on the endpoint PCONFIG-EPT (Service name: com.amazonaws.us-east-1.config, Endpoint type: Interface)
+  Network interfaces: <eni-0659b2a8b0eb17623 eni-09668431440c908aa>
+    Interface: <eni-0659b2a8b0eb17623> Its IP: 10.191.118.108
+    Interface: <eni-09668431440c908aa> Its IP: 10.191.118.142
+Working on the endpoint PLAMBDA-EPT (Service name: com.amazonaws.us-east-1.lambda, Endpoint type: Interface)
+  Network interfaces: <eni-0238ffc532e5be6fb eni-01e1b53b917286b65>
+    Interface: <eni-0238ffc532e5be6fb> Its IP: 10.191.118.115
+    Interface: <eni-01e1b53b917286b65> Its IP: 10.191.118.149
+Working on the endpoint PCLOUDTRAIL-EPT (Service name: com.amazonaws.us-east-1.cloudtrail, Endpoint type: Interface)
+  Network interfaces: <eni-0efe9fe48c262b008 eni-050f04ad0647e3aab>
+    Interface: <eni-0efe9fe48c262b008> Its IP: 10.191.118.141
+    Interface: <eni-050f04ad0647e3aab> Its IP: 10.191.118.100
+Working on the endpoint PSSM-EPT (Service name: com.amazonaws.us-east-1.ssm, Endpoint type: Interface)
+  Network interfaces: <eni-0df3157851c7d15c0 eni-00d92a4111b7bd5c1>
+    Interface: <eni-0df3157851c7d15c0> Its IP: 10.191.118.122
+    Interface: <eni-00d92a4111b7bd5c1> Its IP: 10.191.118.136
+Working on the endpoint PMONITORING-EPT (Service name: com.amazonaws.us-east-1.monitoring, Endpoint type: Interface)
+  Network interfaces: <eni-01e49748343ffb361 eni-0c51c89796511c0ee>
+    Interface: <eni-01e49748343ffb361> Its IP: 10.191.118.106
+    Interface: <eni-0c51c89796511c0ee> Its IP: 10.191.118.135
+Working on the endpoint PEC2MSG-EPT (Service name: com.amazonaws.us-east-1.ec2messages, Endpoint type: Interface)
+  Network interfaces: <eni-0388d8dea711b918e eni-05c8cc5c8e3d36f87>
+    Interface: <eni-0388d8dea711b918e> Its IP: 10.191.118.134
+    Interface: <eni-05c8cc5c8e3d36f87> Its IP: 10.191.118.124
+Working on the endpoint PAPIGW-EPT (Service name: com.amazonaws.us-east-1.execute-api, Endpoint type: Interface)
+  Network interfaces: <eni-00a58f5996e524919 eni-0a937baaa6b2e5273>
+    Interface: <eni-00a58f5996e524919> Its IP: 10.191.118.102
+    Interface: <eni-0a937baaa6b2e5273> Its IP: 10.191.118.156
+Working on the endpoint PSSMMSG-EPT (Service name: com.amazonaws.us-east-1.ssmmessages, Endpoint type: Interface)
+  Network interfaces: <eni-02b8df9530d5adbf2 eni-0ee5ebbab84d96353>
+    Interface: <eni-02b8df9530d5adbf2> Its IP: 10.191.118.121
+    Interface: <eni-0ee5ebbab84d96353> Its IP: 10.191.118.140
+Name                 Service Name                              Endpoint        Private IPs                                       
+------------------------------------------------------------------------------------------------------------
+PS3-EPT              com.amazonaws.us-east-1.s3                Gateway         n/a                                               
+PINSPECTOR-EPT       com.amazonaws.us-east-1.inspector2        Interface       10.191.118.153 10.191.118.111                     
+PSQS-EPT             com.amazonaws.us-east-1.sqs               Interface       10.191.118.107 10.191.118.137                     
+PSECRETSMANAGER-EPT  com.amazonaws.us-east-1.secretsmanager    Interface       10.191.118.147 10.191.118.125                     
+PKMS-EPT             com.amazonaws.us-east-1.kms               Interface       10.191.118.154 10.191.118.120                     
+PSECURITYHUB-EPT     com.amazonaws.us-east-1.securityhub       Interface       10.191.118.146 10.191.118.117                     
+PCLOUDFORMATION-EPT  com.amazonaws.us-east-1.cloudformation    Interface       10.191.118.138 10.191.118.119                     
+PSTS-EPT             com.amazonaws.us-east-1.sts               Interface       10.191.118.148 10.191.118.104                     
+PECRAPI-EPT          com.amazonaws.us-east-1.ecr.api           Interface       10.191.118.157 10.191.118.101                     
+PECRDKR-EPT          com.amazonaws.us-east-1.ecr.dkr           Interface       10.191.118.155 10.191.118.109                     
+PGUARDDUTY-EPT       com.amazonaws.us-east-1.guardduty         Interface       10.191.118.143 10.191.118.126                     
+PCLOUDWATCH-EPT      com.amazonaws.us-east-1.logs              Interface       10.191.118.110 10.191.118.152                     
+PEC2-EPT             com.amazonaws.us-east-1.ec2               Interface       10.191.118.123 10.191.118.139                     
+PSNS-EPT             com.amazonaws.us-east-1.sns               Interface       10.191.118.116 10.191.118.158                     
+PCONFIG-EPT          com.amazonaws.us-east-1.config            Interface       10.191.118.108 10.191.118.142                     
+PLAMBDA-EPT          com.amazonaws.us-east-1.lambda            Interface       10.191.118.115 10.191.118.149                     
+PCLOUDTRAIL-EPT      com.amazonaws.us-east-1.cloudtrail        Interface       10.191.118.141 10.191.118.100                     
+PSSM-EPT             com.amazonaws.us-east-1.ssm               Interface       10.191.118.122 10.191.118.136                     
+PMONITORING-EPT      com.amazonaws.us-east-1.monitoring        Interface       10.191.118.106 10.191.118.135                     
+PEC2MSG-EPT          com.amazonaws.us-east-1.ec2messages       Interface       10.191.118.134 10.191.118.124                     
+PAPIGW-EPT           com.amazonaws.us-east-1.execute-api       Interface       10.191.118.102 10.191.118.156                     
+PSSMMSG-EPT          com.amazonaws.us-east-1.ssmmessages       Interface       10.191.118.121 10.191.118.140                     
+
+Output is also in the CSV format in this file: /tmp/vpd_endpoints_details.csv
