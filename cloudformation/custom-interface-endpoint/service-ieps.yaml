@@ -1,7 +1,7 @@
-# Creates interface endpoing service using NLB
+# Creates the webservice using NLB
 # ../../bin/create-or-update-cw-stack.bash service-ieps.yaml KCSTEMP-SERVICE-IEPS YES
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Template to create interface endpoint service using NLB
+Description: Template to create the webservice using NLB
 Resources:
   # Create VPC
   ServiceVPC:
@@ -74,12 +74,20 @@ Resources:
           ToPort: 80
           CidrIp: 0.0.0.0/0
 
+  # SSH Key Pair
+  KCSKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: KCSKEYPAIR
+      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
+
   # EC2 Instance in public subnet that acts as web server
   ServiceEC2Instance1Pub:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      KeyName: !ImportValue KEYPAIR
+      #KeyName: !ImportValue KEYPAIR
+      KeyName: !Ref KCSKeyPair
       SecurityGroupIds:
         - !Ref PublicEC2SecurityGroup
       SubnetId: !Ref PublicSubnetServiceVPC
@@ -109,6 +117,48 @@ Resources:
             echo "<p>Availability Zone: $AZ</p>" >> /var/www/html/index.html
             echo "</body>" >> /var/www/html/index.html
             echo "</html>" >> /var/www/html/index.html
+
+  # Create a Network Load Balancer
+  ServiceNLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: ServiceNLB
+      Scheme: internet-facing
+      Subnets:
+        - !Ref PublicSubnetServiceVPC
+      Type: network
+      Tags:
+        - Key: Name
+          Value: ServiceNLB
+
+  TargetGroupService:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: ServiceTargetGroup
+      Protocol: TCP
+      Port: 80
+      VpcId: !Ref ServiceVPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref ServiceEC2Instance1Pub
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPort: 80
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+
+  ListenerService:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroupService
+      LoadBalancerArn: !Ref ServiceNLB
+      Port: 80
+      Protocol: TCP
+
 Outputs:
   CustomerVPCId:
     Description: Service VPC ID
@@ -121,3 +171,19 @@ Outputs:
   ServiceEC2Instance1PublicDNS:
     Description: Public DNS of the public EC2 instance in Service VPC
     Value: !GetAtt ServiceEC2Instance1Pub.PublicDnsName
+  
+  ServiceNLBDNS:
+    Description: DNS name of the Network Load Balancer
+    Value: !GetAtt ServiceNLB.DNSName
+
+  ServiceNLBArn:
+    Description: ARN of the Network Load Balancer
+    Value: !GetAtt ServiceNLB.LoadBalancerArn
+    Export:
+      Name: NLBARN
+
+  KeyName:
+    Description: Name of the created key pair
+    Value: !Ref KCSKeyPair
+    Export:
+        Name: KEYPAIR

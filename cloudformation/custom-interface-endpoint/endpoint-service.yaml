@@ -1,0 +1,42 @@
+# Creates interface endpoint service that uses already created NLB in another template and an endpoint that uses the service
+# ../../bin/create-or-update-cw-stack.bash endpoint-service.yaml KCSTEMP-ENDPOINTS NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to interface endpoint service that uses already created NLB in another template and an endpoint that uses the service 
+Resources:
+  NLBEndPointService:
+    Type: AWS::EC2::VPCEndpointService
+    Properties:
+      AcceptanceRequired: false
+      NetworkLoadBalancerArns:
+        - !ImportValue  NLBARN
+      Tags:
+        - Key: Name
+          Value: NLBEndPointService
+
+  EndpointSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for the endpoint
+      VpcId: !ImportValue  CustomerVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.1.0/16
+      Tags:
+        - Key: Name
+          Value: EndpointSG
+#  NLBEndPoint:
+#    Type: AWS::EC2::VPCEndpoint
+#    Properties:
+#      PrivateDnsEnabled: true
+#      SecurityGroupIds:
+#        - !Ref  EndpointSG
+#      ServiceName: !Sub "com.amazonaws.vpce.${AWS::Region}.nlb-endpoint-service-${!Ref NLBEndPointService}"
+#      com.amazonaws.vpce.us-east-1.vpce-svc-03c7ba8b6416b848a
+#      SubnetIds:
+#        - !ImportValue CustomerPrivateSubnetIdVPC
+#      VpcId: !ImportValue  CustomerVPC
+#      Tags:
+#        - Key: Name
+#          Value: NLBEndPoint

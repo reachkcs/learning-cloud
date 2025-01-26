@@ -90,13 +90,6 @@ Resources:
       RouteTableId: !Ref CustomerPublicRouteTableVPC
 
 # Build test EC2s
-  # SSH Key Pair
-  KCSKeyPair:
-    Type: AWS::EC2::KeyPair
-    Properties:
-      KeyName: KCSKEYPAIR
-      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
-
   # Security Group Open to SSH
   CustomerPublicEC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -114,7 +107,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      KeyName: !Ref KCSKeyPair
+      KeyName: !ImportValue KEYPAIR
       SecurityGroupIds:
         - !Ref CustomerPublicEC2SecurityGroup
       SubnetId: !Ref CustomerPublicSubnetVPC
@@ -139,7 +132,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
-      KeyName: !Ref KCSKeyPair
+      KeyName: !ImportValue KEYPAIR
       SecurityGroupIds:
         - !Ref CustomerSecurityGroupVPCPriv
       SubnetId: !Ref CustomerPrivateSubnetVPC
@@ -152,10 +145,14 @@ Outputs:
   CustomerVPCId:
     Description: Customer VPC ID
     Value: !Ref CustomerVPC
+    Export:
+      Name: CustomerVPC
 
   CustomerPrivateSubnetIdVPC:
     Description: Private Subnet ID for Customer VPC
     Value: !Ref CustomerPrivateSubnetVPC
+    Export:
+      Name: CustomerPrivateSubnetIdVPC
 
   CustomerPublicSubnetIdVPC:
     Description: Public Subnet ID for Customer VPC
@@ -168,9 +165,3 @@ Outputs:
   CustomerEC2Instance2PrivateDNS:
     Description: Private DNS of the private EC2 instance in Customer VPC
     Value: !GetAtt CustomerEC2Instance1Priv.PrivateDnsName
-
-  KeyName:
-    Description: Name of the created key pair
-    Value: !Ref KCSKeyPair
-    Export:
-        Name: KEYPAIR
