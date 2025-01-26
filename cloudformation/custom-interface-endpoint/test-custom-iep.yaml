@@ -1,0 +1,176 @@
+# ../../bin/create-or-update-cw-stack.bash test-custom-iep.yaml KCSTEMP-CUSTOM-IEP YES
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to test S3 Gateway Endpoint functionality.
+Resources:
+  # Create VPC
+  CustomerVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.1.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: CustomerVPC
+
+  CustomerInternetGatewayVPC:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: CustomerInternetGatewayVPC
+
+  CustomerVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref CustomerVPC
+      InternetGatewayId: !Ref CustomerInternetGatewayVPC
+
+  # Create a private subnet
+  CustomerPrivateSubnetVPC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CustomerVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      MapPublicIpOnLaunch: 'false'
+      Tags:
+        - Key: Name
+          Value: CustomerPrivateSubnetVPC
+
+  CustomerPrivateRouteTableVPC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CustomerVPC
+      Tags:
+        - Key: Name
+          Value: CustomerPrivateRouteTableVPC
+
+  CustomerPrivRouteTableAssociationVPC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CustomerPrivateSubnetVPC
+      RouteTableId: !Ref CustomerPrivateRouteTableVPC
+
+  # Create a public subnet
+  CustomerPublicSubnetVPC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CustomerVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: CustomerPublicSubnetVPC
+
+  CustomerPublicRouteTableVPC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CustomerVPC
+      Tags:
+        - Key: Name
+          Value: CustomerPublicRouteTableVPC
+
+  CustomerPublicRouteVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref CustomerPublicRouteTableVPC
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CustomerInternetGatewayVPC
+
+  CustomerRouteTableAssociationVPC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CustomerPublicSubnetVPC
+      RouteTableId: !Ref CustomerPublicRouteTableVPC
+
+# Build test EC2s
+  # SSH Key Pair
+  KCSKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: KCSKEYPAIR
+      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
+
+  # Security Group Open to SSH
+  CustomerPublicEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from anywhere
+      VpcId: !Ref CustomerVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 70.106.201.186/32
+
+  # EC2 Instance in public subnet that acts as bastion
+  CustomerEC2Instance1Pub:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref CustomerPublicEC2SecurityGroup
+      SubnetId: !Ref CustomerPublicSubnetVPC
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}' # Dynamically fetch the Amazon Linux 3 AMI
+      Tags:
+        - Key: Name
+          Value: Public-EC2-CustomerVPC
+
+  # Security Group for private EC2
+  CustomerSecurityGroupVPCPriv:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from 10.0.0.0/16
+      VpcId: !Ref CustomerVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/16
+
+  CustomerEC2Instance1Priv:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref CustomerSecurityGroupVPCPriv
+      SubnetId: !Ref CustomerPrivateSubnetVPC
+      #IamInstanceProfile: !Ref InstanceProfile
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}' # Dynamically fetch the Amazon Linux 3 AMI
+      Tags:
+        - Key: Name
+          Value: Private-EC2-CustomerVPC
+Outputs:
+  CustomerVPCId:
+    Description: Customer VPC ID
+    Value: !Ref CustomerVPC
+
+  CustomerPrivateSubnetIdVPC:
+    Description: Private Subnet ID for Customer VPC
+    Value: !Ref CustomerPrivateSubnetVPC
+
+  CustomerPublicSubnetIdVPC:
+    Description: Public Subnet ID for Customer VPC
+    Value: !Ref CustomerPublicSubnetVPC
+
+  CustomerEC2Instance1PublicDNS:
+    Description: Public DNS of the public EC2 instance in Customer VPC
+    Value: !GetAtt CustomerEC2Instance1Pub.PublicDnsName
+
+  CustomerEC2Instance2PrivateDNS:
+    Description: Private DNS of the private EC2 instance in Customer VPC
+    Value: !GetAtt CustomerEC2Instance1Priv.PrivateDnsName
+
+  KeyName:
+    Description: Name of the created key pair
+    Value: !Ref KCSKeyPair
+    Export:
+        Name: KEYPAIR

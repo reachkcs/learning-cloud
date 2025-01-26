@@ -1,0 +1,123 @@
+# Creates interface endpoing service using NLB
+# ../../bin/create-or-update-cw-stack.bash service-ieps.yaml KCSTEMP-SERVICE-IEPS YES
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to create interface endpoint service using NLB
+Resources:
+  # Create VPC
+  ServiceVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: ServiceVPC
+
+  InternetGatewayServiceVPC:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGatewayServiceVPC
+
+  ServiceVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref ServiceVPC
+      InternetGatewayId: !Ref InternetGatewayServiceVPC
+
+  # Create a public subnet
+  PublicSubnetServiceVPC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ServiceVPC
+      CidrBlock: 192.168.1.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnetServiceVPC
+
+  PublicRouteTableServiceVPC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ServiceVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTableServiceVPC
+
+  PublicRouteServiceVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTableServiceVPC
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayServiceVPC
+
+  RouteTableAssociationServiceVPC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetServiceVPC
+      RouteTableId: !Ref PublicRouteTableServiceVPC
+
+  # Security Group to allow traffic from anywhere for 80
+  PublicEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow 80 from anywhere
+      VpcId: !Ref ServiceVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  # EC2 Instance in public subnet that acts as web server
+  ServiceEC2Instance1Pub:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !ImportValue KEYPAIR
+      SecurityGroupIds:
+        - !Ref PublicEC2SecurityGroup
+      SubnetId: !Ref PublicSubnetServiceVPC
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}' # Dynamically fetch the Amazon Linux 3 AMI
+      Tags:
+        - Key: Name
+          Value: Public-EC2-ServiceVPC
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y httpd
+            systemctl start httpd
+            systemctl enable httpd
+
+            # Use IMDSv2 to fetch instance metadata
+            TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+            INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
+            AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+
+            echo "<html>" > /var/www/html/index.html
+            echo "<head><title>Public EC2</title></head>" >> /var/www/html/index.html
+            echo "<body>" >> /var/www/html/index.html
+            echo "<h1>Hello from EC2!</h1>" >> /var/www/html/index.html
+            echo "<p>Instance ID: $INSTANCE_ID</p>" >> /var/www/html/index.html
+            echo "<p>Availability Zone: $AZ</p>" >> /var/www/html/index.html
+            echo "</body>" >> /var/www/html/index.html
+            echo "</html>" >> /var/www/html/index.html
+Outputs:
+  CustomerVPCId:
+    Description: Service VPC ID
+    Value: !Ref ServiceVPC
+
+  PublicSubnetIdServiceVPC:
+    Description: Public Subnet ID for Service VPC
+    Value: !Ref PublicSubnetServiceVPC
+
+  ServiceEC2Instance1PublicDNS:
+    Description: Public DNS of the public EC2 instance in Service VPC
+    Value: !GetAtt ServiceEC2Instance1Pub.PublicDnsName
