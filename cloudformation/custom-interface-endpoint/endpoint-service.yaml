@@ -20,23 +20,41 @@ Resources:
       VpcId: !ImportValue  CustomerVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
+          FromPort: 80
+          ToPort: 80
           CidrIp: 10.0.1.0/16
       Tags:
         - Key: Name
           Value: EndpointSG
-#  NLBEndPoint:
-#    Type: AWS::EC2::VPCEndpoint
-#    Properties:
-#      PrivateDnsEnabled: true
-#      SecurityGroupIds:
-#        - !Ref  EndpointSG
-#      ServiceName: !Sub "com.amazonaws.vpce.${AWS::Region}.nlb-endpoint-service-${!Ref NLBEndPointService}"
-#      com.amazonaws.vpce.us-east-1.vpce-svc-03c7ba8b6416b848a
-#      SubnetIds:
-#        - !ImportValue CustomerPrivateSubnetIdVPC
-#      VpcId: !ImportValue  CustomerVPC
-#      Tags:
-#        - Key: Name
-#          Value: NLBEndPoint
+
+  NLBEndPoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      SecurityGroupIds:
+        - !Ref  EndpointSG
+      ServiceName: !Sub 
+        - "com.amazonaws.vpce.${AWS::Region}.${ServiceName}"
+        - ServiceName: !Ref NLBEndPointService
+      SubnetIds:
+        - !ImportValue CustomerPrivateSubnetIdVPC
+      VpcId: !ImportValue  CustomerVPC
+      Tags:
+        - Key: Name
+          Value: NLBEndPoint
+Outputs:
+  NLBEndPointService:
+    Description: NLBEndPointService
+    Value: !Ref NLBEndPointService
+    Export:
+      Name: NLBEndPointService
+  NLBEndPoint:
+    Description: NLBEndPoint
+    Value: !Ref NLBEndPoint
+    Export:
+      Name: NLBEndPoint
+  NLBEndPointSG:
+    Description: NLBEndPointSG
+    Value: !Ref EndpointSG
+    Export:
+      Name: NLBEndPointSG
