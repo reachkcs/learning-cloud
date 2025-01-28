@@ -1,0 +1,74 @@
+# ../../bin/create-or-update-cw-stack.bash aags-awesome.yaml AAGS-AWESOME-COM NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Static Website with CloudFront, Route 53, and ACM
+
+Resources:
+  # S3 Bucket Policy
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !ImportValue  WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontAccess
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Join ["", [!ImportValue WebsiteBucketARN, "/*"]]
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+  
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Origins:
+          - DomainName: !ImportValue WebsiteURL
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+               QueryString: false
+               Cookies:
+                    Forward: none
+        ViewerCertificate:
+          AcmCertificateArn: !ImportValue CertificateArn
+          SslSupportMethod: sni-only
+        DefaultRootObject: index.html
+
+  # CloudFront Origin Access Identity (OAI)
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Join ["Access Identity for", [!ImportValue DomainName]]
+
+  # Route 53 Record
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Join ["", [!ImportValue DomainName], "."]
+      Name: !Join ["", [!ImportValue DomainName], "."]
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt CloudFrontDistribution.RegionalHostedZoneId
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+
+Outputs:
+  WebsiteURL:
+    Value: !Join ["", ["https://", !ImportValue DomainName]]
+    Description: URL of the static website.

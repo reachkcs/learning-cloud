@@ -1,5 +1,6 @@
+# ../../bin/create-or-update-cw-stack.bash t.yaml AAGS-AWESOME-COM YES
 AWSTemplateFormatVersion: '2010-09-09'
-Description: S3 Static Website with CloudFront, Route 53, and ACM
+Description: Secure CloudFormation template to host a static website using S3 and CloudFront.
 
 Parameters:
   DomainName:
@@ -22,24 +23,6 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: error.html
 
-  # S3 Bucket Policy
-  BucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowCloudFrontAccess
-            Effect: Allow
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action: s3:GetObject
-            Resource: !Sub "${WebsiteBucket.Arn}/*"
-            Condition:
-              StringEquals:
-                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
-
   # ACM Certificate
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -47,14 +30,25 @@ Resources:
       DomainName: !Ref DomainName
       ValidationMethod: DNS
 
-  # CloudFront Distribution
+  # CloudFront Origin Access Identity (OAI)
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "Access identity for secure static website"
+
+# CloudFront Distribution
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Enabled: true
+        Comment: "Secure static website distribution"
+        DefaultRootObject: index.html
+        Aliases:
+          - !Ref DomainName
         Origins:
-          - DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+          - DomainName: !GetAtt WebsiteBucket.DomainName
             Id: S3Origin
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
@@ -68,20 +62,31 @@ Resources:
             - GET
             - HEAD
           ForwardedValues:
-               QueryString: false
-               Cookies:
-                    Forward: none
+            QueryString: false
+            Cookies:
+              Forward: none
         ViewerCertificate:
           AcmCertificateArn: !Ref Certificate
           SslSupportMethod: sni-only
-        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /error.html
 
-  # CloudFront Origin Access Identity (OAI)
-  CloudFrontOAI:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+  # S3 Bucket Policy to allow access only from CloudFront
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub "Access Identity for ${DomainName}"
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontAccess
+            Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${WebsiteBucket}/*'
 
   # Route 53 Record
   DNSRecord:
@@ -91,11 +96,10 @@ Resources:
       Name: !Sub "${DomainName}."
       Type: A
       AliasTarget:
-        HostedZoneId: !GetAtt CloudFrontDistribution.RegionalHostedZoneId
+        HostedZoneId: Z2FDTNDATAQYW2
         DNSName: !GetAtt CloudFrontDistribution.DomainName
 
 Outputs:
-  WebsiteURL:
-    Value: !Sub "https://${DomainName}"
-    Description: URL of the static website.
-
+  CloudFrontURL:
+    Description: URL of the secure CloudFront distribution
+    Value: !GetAtt CloudFrontDistribution.DomainName

@@ -1,0 +1,55 @@
+# ../../bin/create-or-update-cw-stack.bash temp.yaml AAGS-AWESOME-COM NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Static Website with CloudFront, Route 53, and ACM
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: The domain name for the website (e.g., example.com).
+    Default: aags-awesome.com
+
+Resources:
+  # S3 Bucket
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DomainName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+
+  # ACM Certificate
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Description: URL for website hosted on S3
+  CertificateArn:
+    Value: !Ref Certificate
+    Description: ARN of ACM certificate
+    Export:
+      Name: "CertificateArn"
+  BucketName:
+    Value: !Ref WebsiteBucket
+    Description: Name of S3 bucket
+    Export:
+      Name: "WebsiteBucket"
+  WebsiteBucketARN:
+    Value: !GetAtt WebsiteBucket.Arn
+    Description: ARN of S3 bucket
+    Export:
+      Name: "WebsiteBucketARN"
+  DomainName:
+    Value: !Ref DomainName
+    Description: Domain name for website
+    Export:
+      Name: "DomainName"

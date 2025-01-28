@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Secure CloudFormation template to host a static website using S3 and CloudFront.
+
+Resources:
+  # S3 Bucket for hosting the static website
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-secure-static-website-bucket
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      Tags:
+        - Key: Name
+          Value: SecureStaticWebsiteBucket
+
+  # CloudFront Origin Access Identity (OAI)
+  CloudFrontOAI:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "Access identity for secure static website"
+
+  # CloudFront Distribution
+  MyCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: "Secure static website distribution"
+        DefaultRootObject: index.html
+        Origins:
+          - DomainName: !GetAtt MyS3Bucket.DomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /error.html
+
+  # S3 Bucket Policy to allow access only from CloudFront
+  MyS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MyS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontAccess
+            Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${MyS3Bucket}/*'
+
+Outputs:
+  CloudFrontURL:
+    Description: URL of the secure CloudFront distribution
+    Value: !GetAtt MyCloudFrontDistribution.DomainName
