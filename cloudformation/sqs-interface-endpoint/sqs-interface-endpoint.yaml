@@ -1,0 +1,163 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Centralized SQS Interface Endpoint with Transit Gateway and Route 53 Private Hosted Zone
+
+Parameters:
+  SharedServicesVPCCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: CIDR block for the Shared Services VPC
+
+  ProductionVPC1Cidr:
+    Type: String
+    Default: 10.1.0.0/16
+    Description: CIDR block for Production VPC 1
+
+  ProductionVPC2Cidr:
+    Type: String
+    Default: 10.2.0.0/16
+    Description: CIDR block for Production VPC 2
+
+  Region:
+    Type: String
+    Default: us-east-1
+    Description: AWS region where resources will be deployed
+
+Resources:
+  # Shared Services VPC
+  SharedServicesVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SharedServicesVPCCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  # Production VPC 1
+  ProductionVPC1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref ProductionVPC1Cidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  # Production VPC 2
+  ProductionVPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref ProductionVPC2Cidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  # Subnets in Shared Services VPC
+  SharedServicesSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs]
+
+  SharedServicesSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs]
+
+  # SQS Interface Endpoint in Shared Services VPC
+  SQSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      ServiceName: !Sub com.amazonaws.${Region}.sqs
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref SharedServicesSubnet1
+        - !Ref SharedServicesSubnet2
+      SecurityGroupIds:
+        - !Ref SQSEndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  # Security Group for SQS Endpoint
+  SQSEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for SQS Interface Endpoint
+      VpcId: !Ref SharedServicesVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref SharedServicesVPCCidr
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref ProductionVPC1Cidr
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref ProductionVPC2Cidr
+
+  # Transit Gateway
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: Transit Gateway for Shared Services and Production VPCs
+      AutoAcceptSharedAttachments: enable
+
+  # Attach Shared Services VPC to Transit Gateway
+  SharedServicesTGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref SharedServicesVPC
+      SubnetIds:
+        - !Ref SharedServicesSubnet1
+        - !Ref SharedServicesSubnet2
+
+  # Attach Production VPC 1 to Transit Gateway
+  ProductionVPC1TGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref ProductionVPC1
+      SubnetIds:
+        - !Ref ProductionVPC1Subnet
+
+  # Attach Production VPC 2 to Transit Gateway
+  ProductionVPC2TGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !Ref ProductionVPC2
+      SubnetIds:
+        - !Ref ProductionVPC2Subnet
+
+  # Route 53 Private Hosted Zone
+  PrivateHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Sub sqs.${Region}.amazonaws.com
+      VPCs:
+        - VPCId: !Ref SharedServicesVPC
+          VPCRegion: !Ref Region
+        - VPCId: !Ref ProductionVPC1
+          VPCRegion: !Ref Region
+        - VPCId: !Ref ProductionVPC2
+          VPCRegion: !Ref Region
+
+Outputs:
+  SharedServicesVPCId:
+    Description: ID of the Shared Services VPC
+    Value: !Ref SharedServicesVPC
+
+  SQSEndpointId:
+    Description: ID of the SQS Interface Endpoint
+    Value: !Ref SQSEndpoint
+
+  TransitGatewayId:
+    Description: ID of the Transit Gateway
+    Value: !Ref TransitGateway
+
+  PrivateHostedZoneId:
+    Description: ID of the Route 53 Private Hosted Zone
+    Value: !Ref PrivateHostedZone
