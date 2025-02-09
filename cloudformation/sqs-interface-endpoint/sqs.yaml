@@ -1,0 +1,97 @@
+# ../../bin/create-or-update-cw-stack.bash sqs.yaml SQSEP NO
+# aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/677276112527/test-q --message-body "Hello, SQS"
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Centralized SQS Interface Endpoint with Transit Gateway and Route 53 Private Hosted Zone
+
+Resources:
+  # SQS Interface Endpoint in Shared Services VPC
+  SQSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !ImportValue SharedServicesVPCId
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sqs
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !ImportValue SharedServicesSubnet1
+        - !ImportValue SharedServicesSubnet2
+      SecurityGroupIds:
+        - !Ref SQSEndpointSecurityGroup
+      PrivateDnsEnabled: true
+      Tags:
+        - Key: Name
+          Value: SQSInterfaceEndpoint
+
+  # Security Group for SQS Endpoint
+  SQSEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for SQS Interface Endpoint
+      VpcId: !ImportValue SharedServicesVPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !ImportValue SharedServicesVPCCidr
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !ImportValue ProductionVPC1Cidr
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !ImportValue ProductionVPC2Cidr
+
+  # Route 53 Private Hosted Zone
+  PrivateHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Sub sqs.${AWS::Region}.amazonaws.com
+      VPCs:
+        - VPCId: !ImportValue ProductionVPC1Id
+          VPCRegion: !Ref AWS::Region
+        - VPCId: !ImportValue ProductionVPC2Id
+          VPCRegion: !Ref AWS::Region
+
+  OutboundResolverEndpoint:
+    Type: AWS::Route53Resolver::ResolverEndpoint
+    Properties:
+      Direction: "OUTBOUND"
+      Name: "SQS-IE-Outbound-EP"
+      SecurityGroupIds:
+        - !Ref SQSEndpointSecurityGroup
+      IpAddresses:
+        - SubnetId: !ImportValue SharedServicesSubnet1
+        - SubnetId: !ImportValue SharedServicesSubnet2
+
+  SQSIEResolverRule:
+    Type: AWS::Route53Resolver::ResolverRule
+    Properties:
+      DomainName: "sqs.us-east-1.amazonaws.com"
+      RuleType: "FORWARD"
+      Name: "SQS-IE-Rule"
+      ResolverEndpointId: !Ref OutboundResolverEndpoint
+      TargetIps:
+        - Ip: !Join [".", [!Select ["0", !Split [".", !Select ["0", !Split ["/", !ImportValue "SharedServicesVPCCidr"]]]], !Select ["1", !Split [".", !Select ["0", !Split ["/", !ImportValue "SharedServicesVPCCidr"]]]], "0", "2"]]
+
+  SQSIEResolverRuleAssociation1:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: "SQS-IE-Rule-Association-ProdVPC1"
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !ImportValue ProductionVPC1Id
+
+  SQSIEResolverRuleAssociation2:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: "SQS-IE-Rule-Association-ProdVPC2"
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !ImportValue ProductionVPC2Id
+
+Outputs:
+  SQSEndpointId:
+    Description: ID of the SQS Interface Endpoint
+    Value: !Ref SQSEndpoint
+
+  PrivateHostedZoneId:
+    Description: ID of the Route 53 Private Hosted Zone
+    Value: !Ref PrivateHostedZone

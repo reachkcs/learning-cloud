@@ -1,0 +1,55 @@
+# ../../bin/create-or-update-cw-stack.bash tgw.yaml TGW NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Connect all the VPCs with TGW
+
+Resources:
+  # Transit Gateway
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: Transit Gateway for Shared Services and Production VPCs
+      AutoAcceptSharedAttachments: enable
+
+  # Attach Shared Services VPC to Transit Gateway
+  SharedServicesTGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !ImportValue SharedServicesVPCId
+      SubnetIds:
+        - !ImportValue SharedServicesSubnet1
+        - !ImportValue SharedServicesSubnet2
+      Tags:
+        - Key: Name
+          Value: SharedVPC_TGW_Attachment
+
+  # Attach Production VPC 1 to Transit Gateway
+  ProductionVPC1TGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !ImportValue ProductionVPC1Id
+      SubnetIds:
+        - !ImportValue ProductionVPC1Subnet
+      Tags:
+        - Key: Name
+          Value: VPC1_TGW_Attachment
+
+  # Attach Production VPC 2 to Transit Gateway
+  ProductionVPC2TGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGateway
+      VpcId: !ImportValue ProductionVPC2Id
+      SubnetIds:
+        - !ImportValue ProductionVPC2Subnet
+      Tags:
+        - Key: Name
+          Value: VPC2_TGW_Attachment
+
+Outputs:
+  TransitGatewayId:
+    Description: ID of the Transit Gateway
+    Value: !Ref TransitGateway
+    Export:
+      Name: TransitGatewayId

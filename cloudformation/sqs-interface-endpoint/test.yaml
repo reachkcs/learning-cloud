@@ -1,0 +1,121 @@
+#../../bin/create-or-update-cw-stack.bash test.yaml TEST YES
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create two free-tier EC2 instances, a key pair, and a security group.
+Parameters:
+  DefaultVPC:
+    Type: String
+    Default: vpc-00a8f4c60368f58aa
+    Description: Default VPC
+
+  DefaultVPCCidr:
+    Type: String
+    Default: 172.31.0.0/16
+    Description: Default VPC CIDR
+
+  DefaultVPCSubnetRT:
+    Type: String
+    Default: rtb-0e6f3d35cb080c810
+    Description: Route table of the public subnet in the Default VPC
+
+  IAMProfileRole:
+    Type: String
+    Default: temp-iam-profile-for-ec2s
+    Description: IAM role for the EC2 IAM profile
+Resources:
+  # SSH Key Pair
+  KCSKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: TESTKEYPAIR
+      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
+
+  # Security Group Open to SSH
+  AllowSSHSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from 172.31.0.0/16
+      VpcId: !ImportValue ProductionVPC1Id
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref DefaultVPCCidr
+
+  # Instance profile
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref IAMProfileRole
+
+  # EC2 Instance in private subnet
+  PrivateEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref AllowSSHSG
+      SubnetId: !ImportValue ProductionVPC1Subnet 
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      Tags:
+        - Key: Name
+          Value: Private-EC2-TestVPC
+
+  # Test SQS queue
+  TestQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: test-q
+      VisibilityTimeout: 30
+      MessageRetentionPeriod: 345600  # 4 days
+      DelaySeconds: 0
+      ReceiveMessageWaitTimeSeconds: 0  # Short polling
+      Tags:
+        - Key: Name
+          Value: test-q
+
+  # Connect the default VPC to the TGW
+  DefaultVPCTGWAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !ImportValue TransitGatewayId
+      VpcId: vpc-00a8f4c60368f58aa
+      SubnetIds:
+        - subnet-06afee81c2a516bc6
+      Tags:
+        - Key: Name
+          Value: DEFAULTVPC_TGW_Attachment
+
+  RouteToProdVPC1fromDefaultPubSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref DefaultVPCSubnetRT
+      DestinationCidrBlock: !ImportValue ProductionVPC1Cidr
+      TransitGatewayId: !ImportValue TransitGatewayId
+
+  RouteToDefaultPubSubnetFromProdVPC1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue ProductionVPC1SubnetRt
+      DestinationCidrBlock: !Ref DefaultVPCCidr
+      TransitGatewayId: !ImportValue TransitGatewayId
+
+Outputs:
+  PrivateEC2PrivateDNS:
+    Description: Private DNS of the private EC2 instance
+    Value: !GetAtt PrivateEC2.PrivateDnsName
+
+  KeyName:
+    Description: Name of the created key pair
+    Value: !Ref KCSKeyPair
+
+  QueueURL:
+    Description: URL of the created SQS queue
+    Value: !Ref TestQueue
+  
+  QueueARN:
+    Description: ARN of the created SQS queue
+    Value: !GetAtt TestQueue.Arn

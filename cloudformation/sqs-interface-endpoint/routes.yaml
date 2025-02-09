@@ -1,0 +1,32 @@
+# ../../bin/create-or-update-cw-stack.bash routes.yaml ROUTES NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create routes
+
+Resources:
+  Route1ToSharedServicesVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue ProductionVPC1SubnetRt
+      DestinationCidrBlock: !ImportValue SharedServicesVPCCidr
+      TransitGatewayId: !ImportValue TransitGatewayId
+
+  Route2ToSharedServicesVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue ProductionVPC2SubnetRt
+      DestinationCidrBlock: !ImportValue SharedServicesVPCCidr
+      TransitGatewayId: !ImportValue TransitGatewayId
+
+  RouteFromSharedServicesToVPC1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue SharedServicesVPCRt
+      DestinationCidrBlock: !ImportValue ProductionVPC1Cidr
+      TransitGatewayId: !ImportValue TransitGatewayId
+
+  RouteFromSharedServicesToVPC2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !ImportValue SharedServicesVPCRt
+      DestinationCidrBlock: !ImportValue ProductionVPC2Cidr
+      TransitGatewayId: !ImportValue TransitGatewayId

@@ -1,0 +1,219 @@
+# ../../bin/create-or-update-cw-stack.bash vpc.yaml VPC NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Base network with two VPCs for apps and a third shared services VPC
+
+Parameters:
+  SharedServicesVPCCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: CIDR block for the Shared Services VPC
+
+  ProductionVPC1Cidr:
+    Type: String
+    Default: 10.1.0.0/16
+    Description: CIDR block for Production VPC 1
+
+  ProductionVPC2Cidr:
+    Type: String
+    Default: 10.2.0.0/16
+    Description: CIDR block for Production VPC 2
+
+Resources:
+  # Shared Services VPC
+  SharedServicesVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SharedServicesVPCCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: SharedServicesVPC
+
+  SharedServicesVPCRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+
+  # Subnets in Shared Services VPC
+  SharedServicesSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: SharedServicesSubnet1
+
+  SharedServiceRtAssociationSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SharedServicesSubnet1
+      RouteTableId: !Ref SharedServicesVPCRt
+
+  SharedServicesSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: SharedServicesSubnet2
+
+  SharedServiceRtAssociationSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SharedServicesSubnet2
+      RouteTableId: !Ref SharedServicesVPCRt
+
+  # Production VPC 1
+  ProductionVPC1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref ProductionVPC1Cidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ProductionVPC1
+
+  ProductionVPC1Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProductionVPC1
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: ProductionVPC1Subnet
+
+  ProductionVPC1SubnetRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProductionVPC1
+      Tags:
+        - Key: Name
+          Value: ProductionVPC1SubnetRt
+
+  PrivateRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProductionVPC1Subnet
+      RouteTableId: !Ref ProductionVPC1SubnetRt
+
+  # Production VPC 2
+  ProductionVPC2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref ProductionVPC2Cidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ProductionVPC2
+
+  ProductionVPC2Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProductionVPC2
+      CidrBlock: 10.2.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+      Tags:
+        - Key: Name
+          Value: ProductionVPC2Subnet
+
+  ProductionVPC2SubnetRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProductionVPC2
+      Tags:
+        - Key: Name
+          Value: ProductionVPC2SubnetRt
+
+  PrivateRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProductionVPC2Subnet
+      RouteTableId: !Ref ProductionVPC2SubnetRt
+
+Outputs:
+  SharedServicesVPCCidr:
+    Description: CIDR of the Shared Services VPC
+    Value: !Ref SharedServicesVPCCidr
+    Export:
+      Name: SharedServicesVPCCidr
+
+  ProductionVPC1Cidr:
+    Description: CIDR block for Production VPC 1
+    Value: !Ref ProductionVPC1Cidr
+    Export:
+      Name: ProductionVPC1Cidr
+
+  ProductionVPC2Cidr:
+    Description: CIDR block for Production VPC 2
+    Value: !Ref ProductionVPC2Cidr
+    Export:
+      Name: ProductionVPC2Cidr
+
+  SharedServicesVPCId:
+    Description: ID of the Shared Services VPC
+    Value: !Ref SharedServicesVPC
+    Export:
+      Name: SharedServicesVPCId
+
+  SharedServicesVPCRt:
+    Description: Route table ID of the Shared Services VPC
+    Value: !Ref SharedServicesVPCRt
+    Export:
+      Name: SharedServicesVPCRt
+
+  SharedServicesSubnet1:
+    Description: Subnet id of the 1st subnet in the Shared Services VPC
+    Value: !Ref SharedServicesSubnet1
+    Export:
+      Name: SharedServicesSubnet1
+
+  SharedServicesSubnet2:
+    Description: Subnet id of the 2nd subnet in the Shared Services VPC
+    Value: !Ref SharedServicesSubnet2
+    Export:
+      Name: SharedServicesSubnet2
+
+  ProductionVPC1Id:
+    Description: ID of the Production VPC1
+    Value: !Ref ProductionVPC1
+    Export:
+      Name: ProductionVPC1Id
+
+  ProductionVPC2Id:
+    Description: ID of the Production VPC2
+    Value: !Ref ProductionVPC2
+    Export:
+      Name: ProductionVPC2Id
+
+  ProductionVPC1Subnet:
+    Description: Prod VPC1 Subnet
+    Value: !Ref ProductionVPC1Subnet
+    Export:
+      Name: ProductionVPC1Subnet
+
+  ProductionVPC2Subnet:
+    Description: Prod VPC2 Subnet
+    Value: !Ref ProductionVPC2Subnet
+    Export:
+      Name: ProductionVPC2Subnet
+
+  ProductionVPC1SubnetRt:
+    Description: Prod VPC1 Subnet Route Table
+    Value: !Ref ProductionVPC1SubnetRt
+    Export:
+      Name: ProductionVPC1SubnetRt
+
+  ProductionVPC2SubnetRt:
+    Description: Prod VPC2 Subnet Route Table
+    Value: !Ref ProductionVPC2SubnetRt
+    Export:
+      Name: ProductionVPC2SubnetRt
+

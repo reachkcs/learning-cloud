@@ -1,4 +1,5 @@
-
+# ../../bin/create-or-update-cw-stack.bash sqs-interface-endpoint.yaml SQS-ENDPOINT NO
+# aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/677276112527/test-q --message-body "Hello, SQS"
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Centralized SQS Interface Endpoint with Transit Gateway and Route 53 Private Hosted Zone
 
@@ -31,6 +32,24 @@ Resources:
       CidrBlock: !Ref SharedServicesVPCCidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: SharedServicesVPC
+
+  # Subnets in Shared Services VPC
+  SharedServicesSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+
+  SharedServicesSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SharedServicesVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs ]
 
   # Production VPC 1
   ProductionVPC1:
@@ -39,6 +58,37 @@ Resources:
       CidrBlock: !Ref ProductionVPC1Cidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ProductionVPC1
+
+  ProductionVPC1Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ProductionVPC1
+      CidrBlock: 10.1.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
+
+  ProductionVPC1SubnetRt:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ProductionVPC1
+      Tags:
+        - Key: Name
+          Value: ProductionVPC1SubnetRt
+
+  Route1ToSharedServicesVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref ProductionVPC1SubnetRt
+      DestinationCidrBlock: !Ref SharedServicesVPCCidr
+      TransitGatewayId: !Ref TransitGateway
+
+  PrivateRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProductionVPC1Subnet
+      RouteTableId: !Ref ProductionVPC1SubnetRt
 
   # Production VPC 2
   ProductionVPC2:
@@ -47,21 +97,37 @@ Resources:
       CidrBlock: !Ref ProductionVPC2Cidr
       EnableDnsSupport: true
       EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ProductionVPC2
 
-  # Subnets in Shared Services VPC
-  SharedServicesSubnet1:
+  ProductionVPC2Subnet:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref SharedServicesVPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [0, !GetAZs]
+      VpcId: !Ref ProductionVPC2
+      CidrBlock: 10.2.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ]
 
-  SharedServicesSubnet2:
-    Type: AWS::EC2::Subnet
+  ProductionVPC2SubnetRt:
+    Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref SharedServicesVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [1, !GetAZs]
+      VpcId: !Ref ProductionVPC2
+      Tags:
+        - Key: Name
+          Value: ProductionVPC2SubnetRt
+
+  Route2ToSharedServicesVPC:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref ProductionVPC2SubnetRt
+      DestinationCidrBlock: !Ref SharedServicesVPCCidr
+      TransitGatewayId: !Ref TransitGateway
+
+  PrivateRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ProductionVPC2Subnet
+      RouteTableId: !Ref ProductionVPC2SubnetRt
 
   # SQS Interface Endpoint in Shared Services VPC
   SQSEndpoint:
@@ -76,6 +142,9 @@ Resources:
       SecurityGroupIds:
         - !Ref SQSEndpointSecurityGroup
       PrivateDnsEnabled: true
+      Tags:
+        - Key: Name
+          Value: SQSInterfaceEndpoint
 
   # Security Group for SQS Endpoint
   SQSEndpointSecurityGroup:
@@ -113,6 +182,9 @@ Resources:
       SubnetIds:
         - !Ref SharedServicesSubnet1
         - !Ref SharedServicesSubnet2
+      Tags:
+        - Key: Name
+          Value: SharedVPC_TGW_Attachment
 
   # Attach Production VPC 1 to Transit Gateway
   ProductionVPC1TGWAttachment:
@@ -122,6 +194,9 @@ Resources:
       VpcId: !Ref ProductionVPC1
       SubnetIds:
         - !Ref ProductionVPC1Subnet
+      Tags:
+        - Key: Name
+          Value: VPC1_TGW_Attachment
 
   # Attach Production VPC 2 to Transit Gateway
   ProductionVPC2TGWAttachment:
@@ -131,6 +206,9 @@ Resources:
       VpcId: !Ref ProductionVPC2
       SubnetIds:
         - !Ref ProductionVPC2Subnet
+      Tags:
+        - Key: Name
+          Value: VPC2_TGW_Attachment
 
   # Route 53 Private Hosted Zone
   PrivateHostedZone:
@@ -138,17 +216,74 @@ Resources:
     Properties:
       Name: !Sub sqs.${Region}.amazonaws.com
       VPCs:
-        - VPCId: !Ref SharedServicesVPC
-          VPCRegion: !Ref Region
         - VPCId: !Ref ProductionVPC1
           VPCRegion: !Ref Region
         - VPCId: !Ref ProductionVPC2
           VPCRegion: !Ref Region
 
+  OutboundResolverEndpoint:
+    Type: AWS::Route53Resolver::ResolverEndpoint
+    Properties:
+      Direction: "OUTBOUND"
+      Name: "SQS-IE-Outbound-EP"
+      SecurityGroupIds:
+        - !Ref SQSEndpointSecurityGroup
+      IpAddresses:
+        - SubnetId: !Ref SharedServicesSubnet1
+        - SubnetId: !Ref SharedServicesSubnet2
+
+  SQSIEResolverRule:
+    Type: AWS::Route53Resolver::ResolverRule
+    Properties:
+      DomainName: "sqs.us-east-1.amazonaws.com"
+      RuleType: "FORWARD"
+      Name: "SQS-IE-Rule"
+      ResolverEndpointId: !Ref OutboundResolverEndpoint
+      TargetIps:
+        - Ip: !Join [".", [!Select ["0", !Split [".", !Select ["0", !Split ["/", !Ref "SharedServicesVPCCidr"]]]], !Select ["1", !Split [".", !Select ["0", !Split ["/", !Ref "SharedServicesVPCCidr"]]]], "0", "2"]]
+
+  SQSIEResolverRuleAssociation1:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: "SQS-IE-Rule-Association-ProdVPC1"
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !Ref ProductionVPC1
+
+  SQSIEResolverRuleAssociation2:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: "SQS-IE-Rule-Association-ProdVPC2"
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !Ref ProductionVPC2
+
 Outputs:
   SharedServicesVPCId:
     Description: ID of the Shared Services VPC
     Value: !Ref SharedServicesVPC
+
+  ProductionVPC1Id:
+    Description: ID of the Production VPC1
+    Value: !Ref ProductionVPC1
+    Export:
+      Name: ProductionVPC1-ID
+
+  ProductionVPC2Id:
+    Description: ID of the Production VPC2
+    Value: !Ref ProductionVPC2
+    Export:
+      Name: ProductionVPC2-ID
+
+  ProductionVPC1Subnet:
+    Description: Prod VPC1 Subnet
+    Value: !Ref ProductionVPC1Subnet
+    Export:
+      Name: ProductionVPC1Subnet
+
+  ProductionVPC2Subnet:
+    Description: Prod VPC2 Subnet
+    Value: !Ref ProductionVPC2Subnet
+    Export:
+      Name: ProductionVPC2Subnet
 
   SQSEndpointId:
     Description: ID of the SQS Interface Endpoint
@@ -158,6 +293,6 @@ Outputs:
     Description: ID of the Transit Gateway
     Value: !Ref TransitGateway
 
-  PrivateHostedZoneId:
-    Description: ID of the Route 53 Private Hosted Zone
-    Value: !Ref PrivateHostedZone
+  #PrivateHostedZoneId:
+    #Description: ID of the Route 53 Private Hosted Zone
+    #Value: !Ref PrivateHostedZone
