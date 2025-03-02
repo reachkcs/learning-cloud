@@ -52,33 +52,35 @@ resource "aws_instance" "mariadb_ec2" {
   associate_public_ip_address = true
 
   user_data = <<-EOF
-    sudo dnf install -y dnf-utils
-    echo '[mariadb]' > /etc/yum.repos.d/mariadb.repo
-    echo 'name = MariaDB' >> /etc/yum.repos.d/mariadb.repo
-    echo 'baseurl = https://rpm.mariadb.org/10.11/rhel/9/x86_64/' >> /etc/yum.repos.d/mariadb.repo
-    echo 'gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB' >> /etc/yum.repos.d/mariadb.repo
-    echo 'gpgcheck = 1' >> /etc/yum.repos.d/mariadb.repo
-    echo 'enabled = 1' >> /etc/yum.repos.d/mariadb.repo
-    echo 'module_hotfixes = 1' >> /etc/yum.repos.d/mariadb.repo
-    sudo rpm --import https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
-    sudo dnf clean all
-    sudo dnf makecache
-    sudo dnf install MariaDB-server MariaDB-client -y
+  #!/bin/bash
+  echo '[mariadb]' > /etc/yum.repos.d/mariadb.repo
+  echo 'name = MariaDB' >> /etc/yum.repos.d/mariadb.repo
+  echo 'baseurl = https://rpm.mariadb.org/10.11/rhel/9/x86_64/' >> /etc/yum.repos.d/mariadb.repo
+  echo 'gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB' >> /etc/yum.repos.d/mariadb.repo
+  echo 'gpgcheck = 1' >> /etc/yum.repos.d/mariadb.repo
+  echo 'enabled = 1' >> /etc/yum.repos.d/mariadb.repo
+  echo 'module_hotfixes = 1' >> /etc/yum.repos.d/mariadb.repo
+  sudo rpm --import https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
 
-    sudo systemctl start mariadb
-    sudo systemctl enable mariadb
+  sudo dnf install -y dnf-utils
+  sudo dnf clean all
+  sudo dnf makecache
+  sudo dnf install MariaDB-server MariaDB-client -y
 
-    # Secure MariaDB setup
-    mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'abcd1234'; FLUSH PRIVILEGES;"
+  sudo systemctl start mariadb
+  sudo systemctl enable mariadb
 
-    # Create database and user
-    mysql -u root -pabcd1234 -e "CREATE DATABASE kcsdb;"
-    mysql -u root -pabcd1234 -e "CREATE USER 'anukcs'@'%' IDENTIFIED BY 'abcd1234';"
-    mysql -u root -pabcd1234 -e "GRANT ALL PRIVILEGES ON kcsdb.* TO 'anukcs'@'%'; FLUSH PRIVILEGES;"
+  # Secure MariaDB setup
+  mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'abcd1234'; FLUSH PRIVILEGES;"
 
-    # Configure remote access
-    sudo sed -i 's/^bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/my.cnf
-    sudo systemctl restart mariadb
+  # Create database and user
+  mysql -u root -pabcd1234 -e "CREATE DATABASE kcsdb;"
+  mysql -u root -pabcd1234 -e "CREATE USER 'anukcs'@'%' IDENTIFIED BY 'abcd1234';"
+  mysql -u root -pabcd1234 -e "GRANT ALL PRIVILEGES ON kcsdb.* TO 'anukcs'@'%'; FLUSH PRIVILEGES;"
+
+  # Configure remote access
+  sudo sed -i 's/^bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/my.cnf
+  sudo systemctl restart mariadb
   EOF
 
   tags = {

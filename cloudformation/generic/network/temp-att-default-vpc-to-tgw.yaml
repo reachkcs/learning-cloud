@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Attach default VPC to TGW
+Parameters:
+  TransitGatewayId:
+    Description: The ID of the Transit Gateway to which this account's VPC will be connected.
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: '/account/msc-network/tgw/id'
+
+  PublicVPCId:
+    Type: String
+    Default: vpc-00a8f4c60368f58aa
+    Description: VPC Id of the VPC in which public EC2 should be created
+
+  PrivateSubnetTGW1:
+    Type: String
+    Default: subnet-01bf553c04926eb9a
+  
+Resources:
+  EndpointsTransitGatewayVpcAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !Ref PublicVPCId
+      SubnetIds:
+        - !Ref PrivateSubnetTGW1
+      Tags:
+        - Key: Name
+          Value: DEFAULT-VPC-TGW-ATTACHMENT

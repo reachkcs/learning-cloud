@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: StackSet - Creates VPCs, Subnets, Route Tables, and Transit Gateway
+  with Route Propagation using SSM parameters
+
+Parameters:
+  AccountType:
+    Type: String
+    AllowedValues:
+      - Primary
+      - Secondary
+    Description: Specify if this is the Primary (TGW) or Secondary VPC Account.
+
+Conditions:
+  IsPrimaryAccount: !Equals
+    - !Ref AccountType
+    - Primary
+
+Resources:
+  # Fetch VPC CIDR from SSM Parameter Store
+  VPCCIDR:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /network/${AccountType}/vpc/cidr
+
+  Subnet1CIDR:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /network/${AccountType}/subnet1/cidr
+
+  Subnet2CIDR:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /network/${AccountType}/subnet2/cidr
+
+  # VPC Creation
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !GetAtt VPCCIDR.Value
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::AccountId}-VPC
+
+  # Subnets
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !GetAtt Subnet1CIDR.Value
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::AccountId}-Subnet1
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !GetAtt Subnet2CIDR.Value
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::AccountId}-Subnet2
+
+  # Route Tables
+  RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::AccountId}-RouteTable1
+
+  RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::AccountId}-RouteTable2
+
+  # Route Table Associations
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTable1
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref RouteTable2
+
+  # Transit Gateway (Only in Primary Account)
+  MyTransitGateway:
+    Condition: IsPrimaryAccount
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: Transit Gateway for connecting VPCs
+      AmazonSideAsn: 64512
+      AutoAcceptSharedAttachments: enable
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      Tags:
+        - Key: Name
+          Value: TGW-Primary
+
+  # TGW Route Table (Only in Primary Account)
+  MyTGWRouteTable:
+    Condition: IsPrimaryAccount
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties:
+      TransitGatewayId: !Ref MyTransitGateway
+      Tags:
+        - Key: Name
+          Value: TGW-RouteTable
+
+  # TGW Attachment
+  TGWAttachment:
+    Type: AWS::EC2::TransitGatewayAttachment
+    Properties:
+      TransitGatewayId: !If
+        - IsPrimaryAccount
+        - !Ref MyTransitGateway
+        - !Ref TransitGatewayId
+      VpcId: !Ref MyVPC
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      Tags:
+        - Key: Name
+          Value: TGW-Attachment
+
+  # TGW Route Propagation (Only in Primary Account)
+  TGWRoutePropagation:
+    Condition: IsPrimaryAccount
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayRouteTableId: !Ref MyTGWRouteTable
+      TransitGatewayAttachmentId: !Ref TGWAttachment
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref MyVPC
+  TransitGatewayId:
+    Condition: IsPrimaryAccount
+    Description: Transit Gateway ID
+    Value: !Ref MyTransitGateway

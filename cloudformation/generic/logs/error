@@ -1,0 +1,13 @@
+START RequestId: ac682faa-ee4f-4b2d-a0fc-ea6048884f94 Version: $LATEST
+[INFO]	2025-03-02T13:46:41.611Z	ac682faa-ee4f-4b2d-a0fc-ea6048884f94	Received event: {'ResourceProperties': {'HostedZoneId': 'Z08604073O75TJLZ62435', 'VPCId': 'vpc-0b6314168771c4573', 'AWSRegion': 'us-east-1'}}
+[ERROR]	2025-03-02T13:46:42.111Z	ac682faa-ee4f-4b2d-a0fc-ea6048884f94	Error associating VPC with Hosted Zone: An error occurred (ConflictingDomainExists) when calling the AssociateVPCWithHostedZone operation: The VPC vpc-0b6314168771c4573 in region us-east-1 has already been associated with the hosted zone Z08604073O75TJLZ62435 with the same domain name.
+LAMBDA_WARNING: Unhandled exception. The most likely cause is an issue in the function code. However, in rare cases, a Lambda runtime update can cause unexpected function behavior. For functions using managed runtimes, runtime updates can be triggered by a function change, or can be applied automatically. To determine if the runtime has been updated, check the runtime version in the INIT_START log entry. If this error correlates with a change in the runtime version, you may be able to mitigate this error by temporarily rolling back to the previous runtime version. For more information, see https://docs.aws.amazon.com/lambda/latest/dg/runtimes-update.html
+[ERROR] KeyError: 'ResponseURL'
+Traceback (most recent call last):
+  File "/var/task/index.py", line 37, in lambda_handler
+    cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+  File "/var/task/cfnresponse.py", line 21, in send
+    responseUrl = event['ResponseURL']
+END RequestId: ac682faa-ee4f-4b2d-a0fc-ea6048884f94
+REPORT RequestId: ac682faa-ee4f-4b2d-a0fc-ea6048884f94	Duration: 558.76 ms	Billed Duration: 559 ms	Memory Size: 128 MB	Max Memory Used: 76 MB	
+

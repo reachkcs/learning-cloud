@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified/network/endpoints
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+create-or-update-cw-stack.bash create-vpc-assoc-auth.yml ASSOCIATE-VPC-TO-PHZ YES
+
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified/logs
+export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
+create-or-update-cw-stack.bash assoc-vpc-with-hosted-zone.yml ASSOCIATE-VPC-TO-PHZ YES

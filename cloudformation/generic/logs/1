@@ -1,0 +1,6 @@
+#!/bin/bash -x
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+aws route53 create-vpc-association-authorization \
+    --hosted-zone-id Z08604073O75TJLZ62435 \
+    --vpc VPCRegion=us-east-1,VPCId=vpc-0b6314168771c4573
+

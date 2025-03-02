@@ -1,0 +1,25 @@
+#../../bin/create-or-update-cw-stack.bash test-sqs-queue.yaml TESTQ NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create two free-tier EC2 instances, a key pair, and a security group.
+Resources:
+  # Test SQS queue
+  TestQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: test-q
+      VisibilityTimeout: 30
+      MessageRetentionPeriod: 345600  # 4 days
+      DelaySeconds: 0
+      ReceiveMessageWaitTimeSeconds: 0  # Short polling
+      Tags:
+        - Key: Name
+          Value: test-q
+
+Outputs:
+  QueueURL:
+    Description: URL of the created SQS queue
+    Value: !Ref TestQueue
+  
+  QueueARN:
+    Description: ARN of the created SQS queue
+    Value: !GetAtt TestQueue.Arn

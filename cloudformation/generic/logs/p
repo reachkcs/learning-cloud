@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "route53:AssociateVPCWithHostedZone",
+      "Resource": "arn:aws:route53:::hostedzone/Z08604073O75TJLZ62435"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:DescribeVpcs",
+      "Resource": "*"
+    }
+  ]
+}
+
+
+
+old:
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Action": [
+				"route53:associateVpcWithHostedZone",
+				"route53:ListHostedZones",
+				"route53:GetHostedZone"
+			],
+			"Resource": "*",
+			"Effect": "Allow"
+		},
+		{
+			"Action": "route53:AssociateVPCWithHostedZone",
+			"Resource": "arn:aws:ec2:us-east-1:913524932740:vpc/vpc-0b6314168771c4573",
+			"Effect": "Allow"
+		}
+	]
+}
+

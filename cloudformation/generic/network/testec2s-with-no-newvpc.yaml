@@ -1,0 +1,97 @@
+#../../bin/create-or-update-cw-stack.bash testec2s-with-no-newvpc.yaml TEST-EC2S NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create two free-tier EC2 instances, a key pair, and a security group.
+Parameters:
+  PublicVPCId:
+    Type: String
+    Default: vpc-00a8f4c60368f58aa
+    Description: VPC Id of the VPC in which public EC2 should be created
+  PublicSubnetID:
+    Type: String
+    Default: subnet-06afee81c2a516bc6
+    Description: Public subnet id in which public EC2 should be created
+  PrivateSubnetID:
+    Type: String
+    Default: subnet-007c62e29a573739e
+    Description: Private subnet id in which private EC2 should be created
+  PrivateEC2SGId:
+    Type: String
+    Default: sg-0639834ac74529e25
+    Description: Security group id for the private EC2
+  VPCCidr:
+    Type: String
+    Description: CIDR block for the Test VPC
+    Default: "172.31.0.0/16"
+
+Resources:
+  # SSH Key Pair
+  KCSKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: KCSKEYPAIR
+      PublicKeyMaterial: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDXQeWsmLzfgpJgwjG77OtlElm//t5CAlehHlQmReIEZRFe0tFhHBnsZSWEau5hVCKhnN8hKhNWr+Nikk4Q1EeUMwdOAPom833+NRlgZN+yeFcIx2jB2WYwCLLFoxHWk0NWIHE8mTkYlK3BiloCJg0DO9gnayzIfBmkVgDelAUJSiFBessvEeMw0l6V/S5jgVF7AEwTcFYUOicViyQkEkxWyaP8x0VE6UBw/lR5Y0TiG/ST3wj77TwcuPfYW7Exg21a4PW/mEqw6f4kHTAnDGGGzjWIBdfAWz9edpTeiZX5cvIJIALnBqNFkotBKBQrkQnmESzHhI8vzseQA6EB1vVx schidambaram@Sreedhars-MacBook-Pro.local"
+
+  # Security Group Open to SSH
+  PublicSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from home
+      VpcId: !Ref PublicVPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 70.106.201.186/32
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref VPCCidr
+
+  # EC2 Instance in public subnet
+  PublicEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref PublicSG
+      SubnetId: !Ref PublicSubnetID
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      Tags:
+        - Key: Name
+          Value: Public-EC2
+
+  # Private EC2 Instance in VPC
+  InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - temp-iam-profile-for-ec2s 
+  
+  # EC2 Instance in private subnet
+  PrivateEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      KeyName: !Ref KCSKeyPair
+      SecurityGroupIds:
+        - !Ref PrivateEC2SGId
+      SubnetId: !Ref PrivateSubnetID
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      Tags:
+        - Key: Name
+          Value: Private-EC2
+
+Outputs:
+  PublicEC2PublicDNS:
+    Description: Public DNS of the public EC2 instance
+    Value: !GetAtt PublicEC2.PublicDnsName
+
+  PrivateEC2PrivateDNS:
+    Description: Private DNS of the private EC2 instance
+    Value: !GetAtt PrivateEC2.PrivateDnsName
+
+  KeyName:
+    Description: Name of the created key pair
+    Value: !Ref KCSKeyPair

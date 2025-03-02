@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Attach default VPC to TGW
+Parameters:
+  TransitGatewayId:
+    Description: The ID of the Transit Gateway to which this account's VPC will be connected.
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: '/account/msc-network/tgw/id'
+
+  VPCCidr:
+    Type: String
+    Description: CIDR block for the Test VPC
+
+  DefaultPublicRouteTableId:
+    Type: String
+    Default: rtb-0e6f3d35cb080c810
+
+  IngressRouteTableId:
+    Type: String
+
+  IngressVpcCidr:
+    Type: String
+
+  IngressVpcSG:
+    Type: String
+    Default: sg-0639834ac74529e25
+
+Resources:
+  DefaultVPCToIngressRouteviaTGW:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref IngressRouteTableId
+      DestinationCidrBlock: !Ref VPCCidr
+      TransitGatewayId: !Ref TransitGatewayId
+
+  IngressToDefaultVPCRouteviaTGW:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref DefaultPublicRouteTableId
+      DestinationCidrBlock: !Ref IngressVpcCidr
+      TransitGatewayId: !Ref TransitGatewayId
+
+  IngressVpcSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref IngressVpcSG
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref VPCCidr

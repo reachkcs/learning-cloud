@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#
+# Get TGW id from Network account
+#
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/temp-tgw-only.yaml TGW NO
+
+TGWID=$(aws cloudformation describe-stacks --stack-name TGW --query "Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}')
+
+#
+# Switch to Logs account
+#
+export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
+
+#
+# Create SSM parameters and Logs infrastructure (VPC, Subnet, Routes etc)
+#
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
+create-or-update-cw-stack.bash msc-infrastructure-ssm-parameters.yml MSC-INFRA-SSM NO
+
+# Update the TGW parameter
+echo "Update TGW ID in SSM param to <${TGWID}>"
+aws ssm put-parameter --name "/account/msc-network/tgw/id" --value ${TGWID} --type "String" --overwrite
+
+create-or-update-cw-stack.bash logs/msclogs.yml LOGS NO
+create-or-update-cw-stack.bash logs/msclogs-routes.yml ROUTES NO
+
+#
+# Get all the parameter values before attaching TGW and creating test EC2s
+#
+DEFAULT_VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=Default VPC" --query "Vpcs[0].VpcId" --output text)
+DEFAULT_PRIVATE_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${DEFAULT_VPC_ID}" "Name=map-public-ip-on-launch,Values=false" --query "Subnets[0].SubnetId" --output text)
+DEFAULT_PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${DEFAULT_VPC_ID}" "Name=map-public-ip-on-launch,Values=true" --query "Subnets[0].SubnetId" --output text)
+DEFAULT_PUBLIC_SUBNET_RT_ID=$(aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=${DEFAULT_PUBLIC_SUBNET_ID}" --query "RouteTables[0].RouteTableId" --output text)
+DEFAULT_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids ${DEFAULT_VPC_ID} --query "Vpcs[0].CidrBlock" --output text)
+#DEFAULT_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids ${DEFAULT_VPC_ID} --query "Vpcs[0].CidrBlockAssociationSet[1].CidrBlock" --output text)
+
+LOGS_VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=PLOGS-VPC" --query "Vpcs[0].VpcId" --output text)
+LOGS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids ${LOGS_VPC_ID} --query "Vpcs[0].CidrBlock" --output text)
+LOGS_PRIVATE_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=PSUB-APP-SUBNET1-LOGS" --query "Subnets[0].SubnetId" --output text)
+LOGS_PRIVATE_SG_ID=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${LOGS_VPC_ID}" "Name=group-name,Values=default" --query "SecurityGroups[0].GroupId" --output text)
+LOGS_SUBNET_RT_ID=$(aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=${LOGS_PRIVATE_SUBNET_ID}" --query "RouteTables[0].RouteTableId" --output text)
+
+echo "Default VPC ID: ${DEFAULT_VPC_ID}"
+echo "Default VPC Private subnet id: ${DEFAULT_PRIVATE_SUBNET_ID}"
+echo "Default VPC CIDR: <${DEFAULT_VPC_CIDR}>"
+echo "Default VPC Public Subnet Route Id: <${DEFAULT_PUBLIC_SUBNET_RT_ID}>"
+echo "Default VPC Public Subnet ID: <${DEFAULT_PUBLIC_SUBNET_ID}>"
+echo "Logs VPC ID: <${LOGS_VPC_ID}>"
+echo "Logs VPC CIDR: <${LOGS_VPC_CIDR}>"
+echo "Logs Private Subnet ID: <${LOGS_PRIVATE_SUBNET_ID}>"
+echo "Logs Private Subnet Route ID: <${LOGS_SUBNET_RT_ID}>"
+echo "Logs Private Subnet SG ID: <${LOGS_PRIVATE_SG_ID}>"
+
+set -x
+#
+# Attach TGW to the Default VPC in Logs account
+#
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/temp-att-default-vpc-to-tgw.yaml DEFAULT-TGW-ATT NO ParameterKey=PublicVPCId,ParameterValue=${DEFAULT_VPC_ID} ParameterKey=PrivateSubnetTGW1,ParameterValue=${DEFAULT_PRIVATE_SUBNET_ID}
+
+#
+# Create a public EC2 to act as jump host and a private EC2 in Logs VPC to test interface endpoint access
+#
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/testec2s-with-no-newvpc.yaml TESTEC2S YES ParameterKey=PublicVPCId,ParameterValue=${DEFAULT_VPC_ID} ParameterKey=PublicSubnetID,ParameterValue=${DEFAULT_PUBLIC_SUBNET_ID} ParameterKey=PrivateSubnetID,ParameterValue=${LOGS_PRIVATE_SUBNET_ID} ParameterKey=PrivateEC2SGId,ParameterValue=${LOGS_PRIVATE_SG_ID} ParameterKey=VPCCidr,ParameterValue=${DEFAULT_VPC_CIDR}
+create-or-update-cw-stack.bash network/temp-routes.yaml TEMP-ROUTES NO ParameterKey=VPCCidr,ParameterValue=${DEFAULT_VPC_CIDR} ParameterKey=DefaultPublicRouteTableId,ParameterValue=${DEFAULT_PUBLIC_SUBNET_RT_ID} ParameterKey=IngressVpcSG,ParameterValue=${LOGS_PRIVATE_SG_ID} ParameterKey=IngressVpcCidr,ParameterValue=${LOGS_VPC_CIDR} ParameterKey=IngressRouteTableId,ParameterValue=${LOGS_SUBNET_RT_ID}
+
+aws cloudformation describe-stacks --stack-name TESTEC2S --query "Stacks[0].Outputs" --output table

@@ -1,0 +1,34 @@
+#!/bin/bash -x
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/temp-tgw-only.yaml TGW NO
+
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
+create-or-update-cw-stack.bash msc-infrastructure-ssm-parameters.yml MSC-INFRA-SSM NO
+
+LOGS_ACC_ID=913524932740
+aws ssm put-parameter --name "/account/msc-logs/account-id" --value ${LOGS_ACC_ID} --type "String" --overwrite
+NETWORK_ACC_ID=677276112527
+aws ssm put-parameter --name "/account/msc-network/account-id" --value ${NETWORK_ACC_ID} --type "String" --overwrite
+
+TGWID=$(aws cloudformation describe-stacks --stack-name TGW --query "Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}')
+echo "Update TGW ID in SSM param to <${TGWID}>"
+aws ssm put-parameter --name "/account/msc-network/tgw/id" --value ${TGWID} --type "String" --overwrite
+
+create-or-update-cw-stack.bash network/mscnetwork.yml NETWORK NO
+create-or-update-cw-stack.bash network/mscnetwork-routes.yml ROUTES NO
+create-or-update-cw-stack.bash network/endpoints/security-group-ep.yml SEC-GRP-EP NO
+create-or-update-cw-stack.bash network/endpoints/sqs-ep.yml SQS-EP NO
+sleep 10
+#VPC_EP_ID=$(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=PSQS-EPT" --query "VpcEndpoints[*].VpcEndpointId" --output text)
+#ENIS=$(aws ec2 describe-vpc-endpoints --vpc-endpoint-ids ${VPC_EP_ID} --query "VpcEndpoints[*].NetworkInterfaceIds" --output text)
+#IP_ADDR=$(aws ec2 describe-network-interfaces --network-interface-ids eni-0a1b2c3d4e5f67890 eni-0b1c2d3e4f5g67891 --query "NetworkInterfaces[*].PrivateIpAddress" --output text)
+IP_ADDRS=$(aws ec2 describe-network-interfaces --network-interface-ids $(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=PSQS-EPT" --query "VpcEndpoints[0].NetworkInterfaceIds[]" --output text) --query "NetworkInterfaces[*].PrivateIpAddress" --output text)
+
+#echo "VPC End point id: <${VPC_EP_ID}>"
+#echo "ENIs: <${ENIS}>"
+echo "IP_ADDR: <${IP_ADDRS}>"
+IP_ADDR1=$(echo $IP_ADDRS | awk '{print $1}')
+IP_ADDR2=$(echo $IP_ADDRS | awk '{print $2}')
+
+create-or-update-cw-stack.bash network/endpoints/private-hosted-zone-records.yml SQS-EP-A-RECORD NO ParameterKey=SQSEndpointIP1,ParameterValue=${IP_ADDR1} ParameterKey=SQSEndpointIP2,ParameterValue=${IP_ADDR2}

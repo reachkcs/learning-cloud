@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
+create-or-update-cw-stack.bash network/endpoints/associate-vpcs-in-other-accounts.yml ASSOC-VPC NO

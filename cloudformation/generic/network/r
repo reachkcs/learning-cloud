@@ -1,0 +1,12 @@
+#!/bin/bash -x
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
+IP_ADDRS=$(aws ec2 describe-network-interfaces --network-interface-ids $(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=PSQS-EPT" --query "VpcEndpoints[0].NetworkInterfaceIds[]" --output text) --query "NetworkInterfaces[*].PrivateIpAddress" --output text)
+
+#echo "VPC End point id: <${VPC_EP_ID}>"
+#echo "ENIs: <${ENIS}>"
+echo "IP_ADDR: <${IP_ADDRS}>"
+IP_ADDR1=$(echo $IP_ADDRS | awk '{print $1}')
+IP_ADDR2=$(echo $IP_ADDRS | awk '{print $2}')
+
+create-or-update-cw-stack.bash network/endpoints/private-hosted-zone-records.yml SQS-EP-A-RECORD NO ParameterKey=SQSEndpointIP1,ParameterValue=${IP_ADDR1} ParameterKey=SQSEndpointIP2,ParameterValue=${IP_ADDR2}

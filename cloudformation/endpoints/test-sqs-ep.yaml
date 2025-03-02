@@ -89,19 +89,19 @@ Resources:
         - Key: Name
           Value: DEFAULTVPC_TGW_Attachment
 
-  RouteToProdVPC1fromDefaultPubSubnet:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref DefaultVPCSubnetRT
-      DestinationCidrBlock: !ImportValue ProductionVPC1Cidr
-      TransitGatewayId: !ImportValue TransitGatewayId
-
-  RouteToDefaultPubSubnetFromProdVPC1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !ImportValue ProductionVPC1SubnetRt
-      DestinationCidrBlock: !Ref DefaultVPCCidr
-      TransitGatewayId: !ImportValue TransitGatewayId
+#  RouteToProdVPC1fromDefaultPubSubnet:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      RouteTableId: !Ref DefaultVPCSubnetRT
+#      DestinationCidrBlock: !ImportValue ProductionVPC1Cidr
+#      TransitGatewayId: !ImportValue TransitGatewayId
+#
+#  RouteToDefaultPubSubnetFromProdVPC1:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      RouteTableId: !ImportValue ProductionVPC1SubnetRt
+#      DestinationCidrBlock: !Ref DefaultVPCCidr
+#      TransitGatewayId: !ImportValue TransitGatewayId
 
 Outputs:
   PrivateEC2PrivateDNS:

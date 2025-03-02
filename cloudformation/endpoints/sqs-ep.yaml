@@ -1,0 +1,116 @@
+# ../../bin/create-or-update-cw-stack.bash sqs-ep.yaml SQSEP NO
+# aws sqs send-message --queue-url https://sqs.us-east-1.amazonaws.com/677276112527/test-q --message-body "Hello, SQS"
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Centralized SQS Interface Endpoint with Transit Gateway and Route 53 Private Hosted Zone
+
+Parameters:
+  ENVType:
+    Type: String
+    Description: Enter the environment to which this VPC belongs to
+    AllowedValues: ['D', 'T', 'P', 'R']
+    Default: 'P'
+  SGCIDR:
+    Type: String
+    Description: CIDR block for the Security Group
+    Default: 10.191.0.0/16
+  EndpointsVpcCidr:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /account/msc-network/vpc/endpoints/cidr
+
+Resources:
+  # SQS Interface Endpoint in Shared Services VPC
+  SQSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !ImportValue ENDPOINTS-VPC-ID
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sqs
+      VpcEndpointType: Interface
+      SubnetIds:
+        - Fn::ImportValue:
+            Fn::Sub: ${ENVType}ENDPOINTS-PRIVATE-SUBNET-APP1-ID
+        - Fn::ImportValue:
+            Fn::Sub: ${ENVType}ENDPOINTS-PRIVATE-SUBNET-APP2-ID
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ENVType}SQS-EPT
+
+  # Security Group for Endpoint Interfaces
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow traffic to Interface Endpoints
+      VpcId: !ImportValue ENDPOINTS-VPC-ID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref SGCIDR
+
+  # Route 53 Private Hosted Zone
+  SQSPrivateHostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Sub sqs.${AWS::Region}.amazonaws.com
+      VPCs:
+        - VPCId: !ImportValue INGRESS-VPC-ID
+          VPCRegion: !Ref AWS::Region
+        - VPCId: !ImportValue EGRESS-VPC-ID
+          VPCRegion: !Ref AWS::Region
+        - VPCId: !ImportValue INSPECTION-VPC-ID
+          VPCRegion: !Ref AWS::Region
+
+  OutboundResolverEndpoint:
+    Type: AWS::Route53Resolver::ResolverEndpoint
+    Properties:
+      Direction: OUTBOUND
+      Name: !Sub ${ENVType}SQS-IE-OUTBOUND-EP
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      IpAddresses:
+        - SubnetId: 
+            Fn::ImportValue: !Sub ${ENVType}ENDPOINTS-PRIVATE-SUBNET-APP1-ID
+        - SubnetId: 
+            Fn::ImportValue: !Sub ${ENVType}ENDPOINTS-PRIVATE-SUBNET-APP2-ID
+
+  SQSIEResolverRule:
+    Type: AWS::Route53Resolver::ResolverRule
+    Properties:
+      DomainName: !Sub sqs.${AWS::Region}.amazonaws.com
+      RuleType: FORWARD
+      Name: !Sub ${ENVType}SQS-IE-RULE
+      ResolverEndpointId: !Ref OutboundResolverEndpoint
+      TargetIps:
+        - Ip: !Join [ ".", [ !Select [ 0, !Split [ ".", !Select [ 0, !Split [ "/", !Ref EndpointsVpcCidr ] ] ] ], !Select [ 1, !Split [ ".", !Select [ 0, !Split [ "/", !Ref EndpointsVpcCidr ] ] ] ], !Select [ 2, !Split [ ".", !Select [ 0, !Split [ "/", !Ref EndpointsVpcCidr ] ] ] ], "2" ] ]
+
+  SQSIEResolverRuleAssocIngress:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: NETWORK-INGRESS-VPC-RULE-ASSOCIATION
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !ImportValue INGRESS-VPC-ID
+
+  SQSIEResolverRuleAssocEgress:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: NETWORK-EGRESS-VPC-RULE-ASSOCIATION
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !ImportValue EGRESS-VPC-ID
+
+  SQSIEResolverRuleAssocInspection:
+    Type: AWS::Route53Resolver::ResolverRuleAssociation
+    Properties:
+      Name: NETWORK-INSPECTION-VPC-RULE-ASSOCIATION
+      ResolverRuleId: !Ref SQSIEResolverRule
+      VPCId: !ImportValue INSPECTION-VPC-ID
+
+Outputs:
+  SQSEndpointId:
+    Description: ID of the SQS Interface Endpoint
+    Value: !Ref SQSEndpoint
+
+  SQSPrivateHostedZoneId:
+    Description: ID of the Route 53 Private Hosted Zone for SQS
+    Value: !Ref SQSPrivateHostedZone

@@ -1,0 +1,30 @@
+# ../../bin/create-or-update-cw-stack.bash s3-ep.yaml S3-EP NO
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template to create S3 Gateway Endpoint.
+
+Parameters:
+  ENVType:
+    Type: String
+    Description: Enter the environment to which this VPC belongs to
+    AllowedValues: ["D", "T", "P", "R"]
+    Default: "P"
+    
+Resources:
+  # Create S3 Gateway Endpoint
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: 
+        Fn::ImportValue: !Sub "${ENVType}ENDPOINTS-VPC-ID"
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - Fn::ImportValue: !Sub "${ENVType}ENDPOINT-APP-ROUTE-TABLE-ID"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ENVType}S3-GATEWAYENDPOINT"
+
+Outputs:
+  S3GatewayEndpoint:
+    Description: S3 Gateway Endpoint
+    Value: !Ref S3GatewayEndpoint

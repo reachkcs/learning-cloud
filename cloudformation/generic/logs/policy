@@ -1,0 +1,45 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Action": [
+				"route53:CreateVPCAssociationAuthorization",
+				"route53:AssociateVPCWithHostedZone"
+			],
+			"Resource": "arn:aws:route53:::hostedzone/Z08604073O75TJLZ62435",
+			"Effect": "Allow"
+		},
+		{
+			"Action": [
+				"ec2:DescribeVpcs"
+			],
+			"Resource": "*",
+			"Effect": "Allow"
+		},
+		{
+			"Action": [
+				"route53:AssociateVPCWithHostedZone"
+			],
+			"Resource": "arn:aws:ec2:us-east-1:677276112527:vpc/vpc-0b6314168771c4573",
+			"Effect": "Allow"
+		}
+	]
+}
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::677276112527:role/STEP1-n-2-2-VPCAssociationLambdaRole-WyyjXDHdgK9J"
+            },
+            "Action": [
+                "route53:AssociateVPCWithHostedZone"
+            ],
+            "Resource": "arn:aws:ec2:us-east-1:677276112527:vpc/vpc-0b6314168771c4573"
+        }
+    ]
+}
+

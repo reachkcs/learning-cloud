@@ -1,0 +1,32 @@
+# ../../bin/create-or-update-cw-stack.bash temp-tgw-only.yaml TGW NO
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Connect all the VPCs with TGW
+
+Resources:
+  # Transit Gateway
+  TransitGateway:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: Transit Gateway for Shared Services and Production VPCs
+      AutoAcceptSharedAttachments: enable
+      DefaultRouteTableAssociation: enable
+      DefaultRouteTablePropagation: enable
+      DnsSupport: enable
+      VpnEcmpSupport: enable
+
+  TransitGatewayRAMShare:
+    Type: AWS::RAM::ResourceShare
+    Properties:
+      Name: TGW-Share
+      ResourceArns:
+        - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:transit-gateway/${TransitGateway}
+      Principals:
+        - "913524932740"
+      AllowExternalPrincipals: false
+
+Outputs:
+  TransitGatewayId:
+    Description: ID of the Transit Gateway
+    Value: !Ref TransitGateway
+    Export:
+      Name: TransitGatewayId

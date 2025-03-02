@@ -35,14 +35,12 @@ create_stack() {
     aws cloudformation create-stack \
       --stack-name "${STACK_NAME}" \
       --template-body file://"${TEMPLATE_FILE}" \
-      --parameters ${PARAMETERS}
-  else
-    aws cloudformation create-stack \
-      --stack-name "${STACK_NAME}" \
-      --template-body file://"${TEMPLATE_FILE}" \
       --parameters ${PARAMETERS} \
-      --capabilities CAPABILITY_IAM
+      --no-cli-pager
+  else
+    aws cloudformation create-stack --stack-name "${STACK_NAME}" --template-body file://"${TEMPLATE_FILE}" --capabilities CAPABILITY_IAM --parameters ${PARAMETERS} --no-cli-pager
   fi
+  aws cloudformation wait stack-create-complete --stack-name ${STACK_NAME}
 }
 
 if stack_exists; then

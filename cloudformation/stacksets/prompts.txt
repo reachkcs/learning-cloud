@@ -1,0 +1,5 @@
+#give me an example of a stackset that creates 1 VPC, 2 subnets, 2 route tables in two accounts and one transit gateway in one of the account that is used to connect VPCs in both the accounts.
+#one VPC should have cidr as 10.191.102.0/23 and the other should be with CIDR 10.191.104.0/23.
+#instead of hard coding the CIDRs, put them in SSM parameter store and refer them in the template.
+
+There are six AWS accounts. Network (Account id 192493453236), Logs (Account id 193141219852), Backup (Account id 193247781258), IBA (Account id 193179370341), SharedProd (Account id 193209616941), SharedPreProd (Account id 193311249611), Security (Account id 192421911877). All the subnets in them are private. They all are connected to each other using transit gateway with id 

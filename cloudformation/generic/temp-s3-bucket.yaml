@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to test S3 Gateway Endpoint functionality.
+Resources:
+  # Create test S3 bucket
+  TestS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub test-s3-bucket-${AWS::AccountId}-${AWS::Region}
+      Tags:
+        - Key: Name
+          Value: TestS3Bucket

@@ -1,0 +1,38 @@
+import boto3
+import cfnresponse
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+def lambda_handler(event, context):
+    logger.info("Received event: %s", event)
+
+    if 'ResourceProperties' not in event:
+        logger.error("Missing 'ResourceProperties' in event.")
+        cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': "Missing 'ResourceProperties'"})
+        return
+
+    properties = event['ResourceProperties']
+    hosted_zone_id = properties.get('HostedZoneId')
+    vpc_id = properties.get('VPCId')
+    region = properties.get('AWSRegion')
+
+    if not hosted_zone_id or not vpc_id or not region:
+        logger.error("One or more required parameters are missing.")
+        cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': "Missing HostedZoneId, VPCId, or AWSRegion"})
+        return
+
+    route53 = boto3.client('route53')
+
+    try:
+        response_assoc = route53.associate_vpc_with_hosted_zone(
+            HostedZoneId=hosted_zone_id,
+            VPC={'VPCRegion': region, 'VPCId': vpc_id}
+        )
+        logger.info("VPC Association Response: %s", response_assoc)
+        cfnresponse.send(event, context, cfnresponse.SUCCESS, {'Message': 'VPC Successfully Associated with Hosted Zone'})
+    except Exception as e:
+        logger.error("Error associating VPC with Hosted Zone: %s", str(e))
+        cfnresponse.send(event, context, cfnresponse.FAILED, {'Error': str(e)})
+
