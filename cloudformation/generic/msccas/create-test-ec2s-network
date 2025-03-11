@@ -1,0 +1,33 @@
+#!/bin/bash
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+
+DEFAULT_VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=Default VPC" --query "Vpcs[0].VpcId" --output text)
+PUBLIC_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${DEFAULT_VPC_ID}" "Name=map-public-ip-on-launch,Values=true" --query "Subnets[*].SubnetId" --output text)
+DEFAULT_PUBLIC_SUBNET_RT_ID=$(aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=${PUBLIC_SUBNET_ID}" --query "RouteTables[*].RouteTableId" --output text)
+
+INGRESS_VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=PINGRESS-VPC" --query "Vpcs[0].VpcId" --output text)
+INGRESS_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids ${INGRESS_VPC_ID} --query "Vpcs[0].CidrBlock" --output text)
+INGRESS_PRIVATE_SUBNET_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=PSUB-APP-SUBNET1-INGRESS" --query "Subnets[0].SubnetId" --output text)
+DEFAULT_VPC_CIDR=$(aws ec2 describe-vpcs --vpc-ids ${DEFAULT_VPC_ID} --query "Vpcs[0].CidrBlock" --output text)
+INGRESS_PRIVATE_SG_ID=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${INGRESS_VPC_ID}" "Name=group-name,Values=default" --query "SecurityGroups[0].GroupId" --output text)
+INGRESS_SUBNET_RT_ID=$(aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=${INGRESS_PRIVATE_SUBNET_ID}" --query "RouteTables[0].RouteTableId" --output text)
+
+echo "Default VPC ID: <${DEFAULT_VPC_ID}>"
+echo "Default VPC Route Id: <${DEFAULT_PUBLIC_RT_ID}>"
+echo "Public Subnet Route Id: <${DEFAULT_PUBLIC_SUBNET_RT_ID}>"
+echo "Default VPC CIDR: <${DEFAULT_VPC_CIDR}>"
+echo "Public Subnet ID: <${PUBLIC_SUBNET_ID}>"
+echo "Private Subnet ID: <${INGRESS_PRIVATE_SUBNET_ID}>"
+echo "Ingress VPC ID: <${INGRESS_VPC_ID}>"
+echo "Ingress VPC SG ID: <${INGRESS_PRIVATE_SG_ID}>"
+echo "Ingress Subnet Route Table ID: <${INGRESS_SUBNET_RT_ID}>"
+
+set -x
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/testec2s-with-no-newvpc.yaml TESTEC2S YES ParameterKey=PublicVPCId,ParameterValue=${DEFAULT_VPC_ID} ParameterKey=PublicSubnetID,ParameterValue=${PUBLIC_SUBNET_ID} ParameterKey=PrivateSubnetID,ParameterValue=${INGRESS_PRIVATE_SUBNET_ID} ParameterKey=PrivateEC2SGId,ParameterValue=${INGRESS_PRIVATE_SG_ID} ParameterKey=VPCCidr,ParameterValue=${DEFAULT_VPC_CIDR}
+
+create-or-update-cw-stack.bash network/temp-att-default-vpc-to-tgw.yaml DEFAULT-TGW-ATT NO
+
+create-or-update-cw-stack.bash network/temp-routes.yaml TEMP-ROUTES NO ParameterKey=VPCCidr,ParameterValue=${DEFAULT_VPC_CIDR} ParameterKey=DefaultPublicRouteTableId,ParameterValue=${DEFAULT_PUBLIC_SUBNET_RT_ID} ParameterKey=IngressVpcSG,ParameterValue=${INGRESS_PRIVATE_SG_ID} ParameterKey=IngressVpcCidr,ParameterValue=${INGRESS_VPC_CIDR} ParameterKey=IngressRouteTableId,ParameterValue=${INGRESS_SUBNET_RT_ID}
+
+aws cloudformation describe-stacks --stack-name TESTEC2S --query "Stacks[0].Outputs" --output table

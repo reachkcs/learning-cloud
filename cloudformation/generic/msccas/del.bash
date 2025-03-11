@@ -1,0 +1,20 @@
+#!/bin/bash
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+delete_cw_stack.bash DEFAULT-TGW-ATT
+delete_cw_stack.bash GRANT-AUTH-TO-ASSOCIATE-VPC-TO-PHZ
+delete_cw_stack.bash MSC-INFRA-SSM
+delete_cw_stack.bash NETWORK
+delete_cw_stack.bash ROUTES
+delete_cw_stack.bash SEC-GRP-EP
+delete_cw_stack.bash SQS-EP-A-RECORD
+delete_cw_stack.bash TEMP-ROUTES
+delete_cw_stack.bash TESTEC2S
+delete_cw_stack.bash TGW
+export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
+delete_cw_stack.bash ASSOCIATE-VPC-TO-PHZ3
+delete_cw_stack.bash DEFAULT-TGW-ATT
+delete_cw_stack.bash LOGS
+delete_cw_stack.bash MSC-INFRA-SSM
+delete_cw_stack.bash ROUTES
+delete_cw_stack.bash TEMP-ROUTES
+delete_cw_stack.bash TESTEC2S

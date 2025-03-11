@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Setup the Network account
+#
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
+create-or-update-cw-stack.bash network/temp-tgw-only.yaml TGW NO
+
+cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
+create-or-update-cw-stack.bash msc-infrastructure-ssm-parameters.yml MSC-INFRA-SSM NO
+
+# Update the TGW parameter
+TGWID=$(aws cloudformation describe-stacks --stack-name TGW --query "Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}')
+echo "Update TGW ID in SSM param to <${TGWID}>"
+aws ssm put-parameter --name "/account/msc-network/tgw/id" --value ${TGWID} --type "String" --overwrite
+
+# Update the AWS account ids
+LOGS_ACC_ID=913524932740
+aws ssm put-parameter --name "/account/msc-logs/account-id" --value ${LOGS_ACC_ID} --type "String" --overwrite
+NETWORK_ACC_ID=677276112527
+aws ssm put-parameter --name "/account/msc-network/account-id" --value ${NETWORK_ACC_ID} --type "String" --overwrite
+
+# Create VPC, Subnets and Routes
+create-or-update-cw-stack.bash network/mscnetwork.yml NETWORK NO
+create-or-update-cw-stack.bash network/mscnetwork-routes.yml ROUTES NO
+
+# Create Security Group for the interface endpoints
+create-or-update-cw-stack.bash network/endpoints/security-group-ep.yml SEC-GRP-EP NO
+
+# Create Interface Endpoint for any service
+#set -x
+
+#for SERVICE in S3 SQS STS SNS KINESIS SNS SECRETSMANAGER EC2 EC2MSG APIGW CLOUDWATCH CLOUDTRAIL CLOUDFORMATION CONFIG KMS LAMBDA GUARDDUTY SECURITYHUB INSPECTOR
+#for SERVICE in KINESIS APIGW CLOUDTRAIL INSPECTOR
+for SERVICE in SSM SSMMSG ECRAPI ECRDKR
+do
+  create-or-update-cw-stack.bash network/endpoints/endpoints.yml ${SERVICE}-EP NO ParameterKey=ServiceName,ParameterValue=${SERVICE}
+  IP_ADDRS=$(aws ec2 describe-network-interfaces --network-interface-ids $(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=P${SERVICE}-EPT" --query "VpcEndpoints[0].NetworkInterfaceIds[]" --output text) --query "NetworkInterfaces[*].PrivateIpAddress" --output text)
+  IP_ADDR1=$(echo $IP_ADDRS | awk '{print $1}')
+  IP_ADDR2=$(echo $IP_ADDRS | awk '{print $2}')
+  echo "Service: <${SERVICE}>, IP_ADDR1=<${IP_ADDR1}>, IP_ADDR2=<${IP_ADDR2}>"
+  create-or-update-cw-stack.bash network/endpoints/private-hosted-zone-records.yml ${SERVICE}-EP-A-RECORD NO ParameterKey=EndpointIP1,ParameterValue=${IP_ADDR1} ParameterKey=EndpointIP2,ParameterValue=${IP_ADDR2} ParameterKey=ServiceName,ParameterValue=${SERVICE}
+done
+
+exit 0
+
+#
+# Setup the Logs account
+#
+export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
+create-or-update-cw-stack.bash msc-infrastructure-ssm-parameters.yml MSC-INFRA-SSM NO
+
+# Update the TGW parameter
+echo "Update TGW ID in SSM param to <${TGWID}>"
+aws ssm put-parameter --name "/account/msc-network/tgw/id" --value ${TGWID} --type "String" --overwrite
+
+# Create VPC, Subnets and Routes
+create-or-update-cw-stack.bash logs/msclogs.yml LOGS NO
+create-or-update-cw-stack.bash logs/msclogs-routes.yml ROUTES NO
+
+LOGS_VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=PLOGS-VPC" --query "Vpcs[0].VpcId" --output text)
+
+echo "Logs VPC Id: <${LOGS_VPC_ID}>"
+# Grant authorization in Network account that owns Private Hosted Zone for SQS for Logs VPC to associate itself
+export AWS_PROFILE=KCS-Personal-anukcs-gmail
+create-or-update-cw-stack.bash network/endpoints/create-vpc-assoc-auth.yml GRANT-AUTH-TO-ASSOCIATE-VPC-TO-PHZ YES ParameterKey=VPCId,ParameterValue=${LOGS_VPC_ID}
+
+# Associate Logs VPC to the SQS Private hosted zone
+HOSTED_ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='sqs.us-east-1.amazonaws.com.'].Id" --output text | awk -F\/ '{print $NF}')
+echo "Hosted zone id: <${HOSTED_ZONE_ID}>"
+export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
+create-or-update-cw-stack.bash logs/assoc-vpc-with-hosted-zone.yml ASSOCIATE-VPC-TO-PHZ3 YES ParameterKey=HostedZoneId,ParameterValue=${HOSTED_ZONE_ID}

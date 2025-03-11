@@ -4,34 +4,12 @@
 # Get TGW id from Network account
 #
 export AWS_PROFILE=KCS-Personal-anukcs-gmail
-cd /Users/aags/Documents/Sreedhar/work/learning-cloud/cloudformation/generic 
-create-or-update-cw-stack.bash network/temp-tgw-only.yaml TGW NO
-
 TGWID=$(aws cloudformation describe-stacks --stack-name TGW --query "Stacks[0].Outputs[0].OutputValue" | awk -F\" '{print $2}')
 
 #
 # Switch to Logs account
 #
 export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
-
-#
-# Create SSM parameters and Logs infrastructure (VPC, Subnet, Routes etc)
-#
-cd /Users/aags/Documents/Sreedhar/work/caci/cloudformation.modified
-create-or-update-cw-stack.bash msc-infrastructure-ssm-parameters.yml MSC-INFRA-SSM NO
-
-# Update the TGW parameter
-echo "Update TGW ID in SSM param to <${TGWID}>"
-aws ssm put-parameter --name "/account/msc-network/tgw/id" --value ${TGWID} --type "String" --overwrite
-
-create-or-update-cw-stack.bash logs/msclogs.yml LOGS NO
-create-or-update-cw-stack.bash logs/msclogs-routes.yml ROUTES NO
-
-export AWS_PROFILE=KCS-Personal-anukcs-gmail
-create-or-update-cw-stack.bash network/endpoints/create-vpc-assoc-auth.yml GRANT-AUTH-TO-ASSOCIATE-VPC-TO-PHZ YES
-
-export AWS_PROFILE=KCS-Personal-reachsreedhar-kcs
-create-or-update-cw-stack.bash logs/assoc-vpc-with-hosted-zone.yml ASSOCIATE-VPC-TO-PHZ YES
 
 #
 # Get all the parameter values before attaching TGW and creating test EC2s
