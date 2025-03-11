@@ -1,0 +1,151 @@
+              now              
+-------------------------------
+ 2024-12-08 07:58:12.879192-05
+(1 row)
+
+ANALYZE
+              now              
+-------------------------------
+ 2024-12-08 07:58:17.002523-05
+(1 row)
+
+  count   
+----------
+ 36060000
+(1 row)
+
+              now              
+-------------------------------
+ 2024-12-08 07:58:17.502461-05
+(1 row)
+
+                                                                                                    QUERY PLAN                                                                                                    
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=764546.27..764546.28 rows=1 width=8) (actual time=670.970..672.344 rows=1 loops=1)
+   Output: count(*)
+   ->  Gather  (cost=764546.06..764546.27 rows=2 width=8) (actual time=670.920..672.342 rows=3 loops=1)
+         Output: (PARTIAL count(*))
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate  (cost=763546.06..763546.07 rows=1 width=8) (actual time=668.123..668.123 rows=1 loops=3)
+               Output: PARTIAL count(*)
+               Worker 0:  actual time=666.741..666.741 rows=1 loops=1
+               Worker 1:  actual time=666.745..666.745 rows=1 loops=1
+               ->  Parallel Index Only Scan using user_interactions_backup_pk on public.user_interactions_backup  (cost=0.56..725990.80 rows=15022102 width=0) (actual time=0.044..437.564 rows=12020000 loops=3)
+                     Output: id
+                     Heap Fetches: 0
+                     Worker 0:  actual time=0.042..436.285 rows=11997480 loops=1
+                     Worker 1:  actual time=0.077..436.938 rows=11989428 loops=1
+ Query Identifier: 2796194050190036143
+ Planning Time: 0.022 ms
+ Execution Time: 672.351 ms
+(18 rows)
+
+             now             
+-----------------------------
+ 2024-12-08 07:58:18.1762-05
+(1 row)
+
+ to_char |  count  
+---------+---------
+ 2024-09 | 2832249
+ 2024-07 | 2701586
+ 2024-11 | 2515973
+ 2024-04 | 2270673
+ 2023-10 | 2228068
+ 2024-06 | 2214303
+ 2024-05 | 1765171
+ 2024-10 | 1706839
+ 2023-09 | 1597434
+ 2023-11 | 1582626
+ 2024-03 | 1534945
+ 2024-01 | 1399975
+ 2024-08 | 1373026
+ 2023-12 | 1147972
+ 2024-02 | 1085458
+ 2023-08 |  850260
+ 2023-05 |  825568
+ 2023-07 |  769535
+ 2023-06 |  642491
+ 2023-01 |  571726
+ 2022-11 |  548939
+ 2022-03 |  403134
+ 2023-02 |  395353
+ 2022-09 |  370441
+ 2022-12 |  319242
+ 2023-04 |  313211
+ 2023-03 |  309217
+ 2022-10 |  280374
+ 2024-12 |  279807
+ 2022-06 |  242830
+ 2022-05 |  222652
+ 2022-07 |  203213
+ 2022-04 |  196043
+ 2022-08 |  143052
+ 2022-02 |  119338
+ 2022-01 |   72872
+ 2021-08 |    9192
+ 2021-07 |    4807
+ 2021-06 |    3548
+ 2021-09 |    2768
+ 2021-12 |    1770
+ 2021-11 |    1216
+ 2021-10 |    1103
+(43 rows)
+
+              now              
+-------------------------------
+ 2024-12-08 07:58:36.811321-05
+(1 row)
+
+                                                                                       QUERY PLAN                                                                                       
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=15344176.07..15434308.68 rows=36053044 width=40) (actual time=16858.972..16858.992 rows=43 loops=1)
+   Output: (to_char(created_at, 'YYYY-MM'::text)), (count(*))
+   Sort Key: (count(*)) DESC
+   Sort Method: quicksort  Memory: 27kB
+   ->  Finalize GroupAggregate  (cost=3492211.67..7861384.39 rows=36053044 width=40) (actual time=15782.562..16858.978 rows=43 loops=1)
+         Output: (to_char(created_at, 'YYYY-MM'::text)), count(*)
+         Group Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+         ->  Gather Merge  (cost=3492211.67..7260500.32 rows=30044204 width=40) (actual time=15782.408..16858.949 rows=126 loops=1)
+               Output: (to_char(created_at, 'YYYY-MM'::text)), (PARTIAL count(*))
+               Workers Planned: 2
+               Workers Launched: 2
+               ->  Partial GroupAggregate  (cost=3491211.65..3791653.69 rows=15022102 width=40) (actual time=15746.106..16782.950 rows=42 loops=3)
+                     Output: (to_char(created_at, 'YYYY-MM'::text)), PARTIAL count(*)
+                     Group Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+                     Worker 0:  actual time=15716.156..16738.266 rows=41 loops=1
+                     Worker 1:  actual time=15739.815..16772.373 rows=42 loops=1
+                     ->  Sort  (cost=3491211.65..3528766.90 rows=15022102 width=32) (actual time=15745.998..16357.269 rows=12020000 loops=3)
+                           Output: (to_char(created_at, 'YYYY-MM'::text))
+                           Sort Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+                           Sort Method: external merge  Disk: 213904kB
+                           Worker 0:  actual time=15716.056..16320.717 rows=11921050 loops=1
+                             Sort Method: external merge  Disk: 210008kB
+                           Worker 1:  actual time=15739.700..16345.464 rows=11995956 loops=1
+                             Sort Method: external merge  Disk: 211320kB
+                           ->  Parallel Seq Scan on public.user_interactions_backup  (cost=0.00..981696.27 rows=15022102 width=32) (actual time=2.835..12993.153 rows=12020000 loops=3)
+                                 Output: to_char(created_at, 'YYYY-MM'::text)
+                                 Worker 0:  actual time=4.246..12995.515 rows=11921050 loops=1
+                                 Worker 1:  actual time=4.241..12987.540 rows=11995956 loops=1
+ Query Identifier: 3872912805829783099
+ Planning Time: 0.048 ms
+ Execution Time: 16891.975 ms
+(31 rows)
+
+              now              
+-------------------------------
+ 2024-12-08 07:58:53.706441-05
+(1 row)
+
+ total_size 
+------------
+ 9082 MB
+(1 row)
+
+                         indexname                          |                                                                           indexdef                                                                           
+------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ user_interactions_backup_pk                                | CREATE UNIQUE INDEX user_interactions_backup_pk ON public.user_interactions_backup USING btree (id)
+ user_interactions_backup_user_profile_id_action_created_at | CREATE INDEX user_interactions_backup_user_profile_id_action_created_at ON public.user_interactions_backup USING btree (user_profile_id, action, created_at)
+(2 rows)
+

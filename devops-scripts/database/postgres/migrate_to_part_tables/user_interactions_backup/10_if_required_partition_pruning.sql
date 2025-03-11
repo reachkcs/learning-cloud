@@ -1,0 +1,4 @@
+\o log/10_if_required_partition_pruning.log
+ALTER TABLE user_interactions_backup DETACH PARTITION kcs_user_interactions_backup_jun2021;
+DROP TABLE user_interactions_backup_jun2021;
+\o

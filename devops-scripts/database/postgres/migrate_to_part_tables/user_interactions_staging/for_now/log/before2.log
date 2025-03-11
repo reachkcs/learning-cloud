@@ -1,0 +1,38 @@
+              now              
+-------------------------------
+ 2024-12-12 18:58:19.427853+00
+(1 row)
+
+ avg 
+-----
+    
+(1 row)
+
+              now              
+-------------------------------
+ 2024-12-12 18:58:19.442593+00
+(1 row)
+
+                                                                                                                                                                                                                                                                 QUERY PLAN                                                                                                                                                                                                                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=245.17..245.18 rows=1 width=32) (actual time=0.173..0.173 rows=1 loops=1)
+   Output: avg(CASE WHEN ((user_interactions.action)::text = ANY ('{"MemoryGame - Match Guess","WhackAMoleGame - correct","Flashcards - Click - Correct","SkyRollerVocabulary - Word Completion","Story - Click - Exercise Success"}'::text[])) THEN 1 ELSE 0 END)
+   ->  Bitmap Heap Scan on public.user_interactions  (cost=37.47..245.16 rows=1 width=24) (actual time=0.170..0.171 rows=0 loops=1)
+         Output: user_interactions.action
+         Recheck Cond: (((user_interactions.user_profile_id = 2262) AND ((user_interactions.action)::text = ANY ('{"Story - Click - Exercise Success","Story - Click - Loose a heart"}'::text[]))) OR ((user_interactions.user_profile_id = 2262) AND ((user_interactions.action)::text = ANY ('{"WhackAMoleGame - wrong","Flashcards - Click - Incorrect","MemoryGame - Match Guess","WhackAMoleGame - correct","Flashcards - Click - Correct","SkyRollerVocabulary - Word Completion"}'::text[]))))
+         Filter: ((date_trunc('month'::text, user_interactions.created_at) = '2024-12-01 00:00:00'::timestamp without time zone) AND ((((user_interactions.action)::text = ANY ('{"Story - Click - Exercise Success","Story - Click - Loose a heart"}'::text[])) AND (hashed SubPlan 1)) OR ((user_interactions.action)::text = ANY ('{"WhackAMoleGame - wrong","Flashcards - Click - Incorrect","MemoryGame - Match Guess","WhackAMoleGame - correct","Flashcards - Click - Correct","SkyRollerVocabulary - Word Completion"}'::text[]))))
+         Rows Removed by Filter: 47
+         Heap Blocks: exact=30
+         ->  BitmapOr  (cost=35.96..35.96 rows=54 width=0) (actual time=0.054..0.055 rows=0 loops=1)
+               ->  Bitmap Index Scan on user_interactions_user_profile_id_action_created_at  (cost=0.00..9.29 rows=44 width=0) (actual time=0.028..0.028 rows=47 loops=1)
+                     Index Cond: ((user_interactions.user_profile_id = 2262) AND ((user_interactions.action)::text = ANY ('{"Story - Click - Exercise Success","Story - Click - Loose a heart"}'::text[])))
+               ->  Bitmap Index Scan on user_interactions_user_profile_id_action_created_at  (cost=0.00..26.67 rows=11 width=0) (actual time=0.026..0.026 rows=0 loops=1)
+                     Index Cond: ((user_interactions.user_profile_id = 2262) AND ((user_interactions.action)::text = ANY ('{"WhackAMoleGame - wrong","Flashcards - Click - Incorrect","MemoryGame - Match Guess","WhackAMoleGame - correct","Flashcards - Click - Correct","SkyRollerVocabulary - Word Completion"}'::text[])))
+         SubPlan 1
+           ->  Seq Scan on public.exercise_classifications  (cost=0.00..1.43 rows=34 width=32) (never executed)
+                 Output: lower((exercise_classifications.exercise_name)::text)
+ Query Identifier: -231893660538242952
+ Planning Time: 0.254 ms
+ Execution Time: 0.238 ms
+(19 rows)
+

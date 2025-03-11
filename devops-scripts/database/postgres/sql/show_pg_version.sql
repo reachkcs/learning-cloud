@@ -1,0 +1,3 @@
+\x
+SELECT version();
+

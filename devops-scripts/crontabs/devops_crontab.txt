@@ -1,0 +1,2 @@
+30 13 * * * /home/devops/scripts/devops-scripts/bash/wrapper_download_aurora_postgres_logs.bash > /tmp/wrapper_download_aurora_postgres_logs.cron.log 2>&1
+45 13 * * * /home/devops/scripts/devops-scripts/python/cleanup_aurora_postgres_logs.py > /tmp/cleanup_aurora_postgres_logs.cron.log 2>&1 4

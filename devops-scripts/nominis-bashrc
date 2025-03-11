@@ -1,0 +1,76 @@
+# Python
+export PYTHONPATH=$PYTHONPATH:./lib
+
+# ECS
+export PROD_ECS_CLUSTER_NAME=nominis-production
+export STAGE_ECS_CLUSTER_NAME=nominis-staging
+
+# AWS
+export AWS_REGION=eu-west-3
+
+# Aurora
+export PGUSER_STAGE_RO_USER=avi_read_only
+export PGUSER_PROD_USER=nominis
+export PG_STAGING_DB=db_nominis_staging
+export PG_PROD_DB=db_nominis_production
+export AURORA_CLUSTER_ID=app-prod-aurora-cluster
+#
+export PGHOST=app-prod-aurora-cluster.cluster-ccjn83emt5hv.eu-west-3.rds.amazonaws.com 
+export PGPORT=5432
+export PGDATABASE=${PG_STAGING_DB}
+export PGUSER_READ_ONLY=avi_read_only
+export PGUSER=staging_adm
+
+# Local DB
+#export PGHOST=localhost
+#export PGPORT=5432
+
+# Aliases
+alias login_to_aws='aws configure sso'
+alias list_ecs_clusters='aws ecs list-clusters --region ${AWS_REGION}'
+alias get_prod_ecs_cluster_name="aws ecs list-clusters --query 'clusterArns[0]' --region ${AWS_REGION} | awk -F\/ '{print \$NF}' | sed 's/.$//'"
+alias get_stage_ecs_cluster_name="aws ecs list-clusters --query 'clusterArns[1]' --region ${AWS_REGION} | awk -F\/ '{print \$NF}' | sed 's/.$//'"
+alias describe_staging_ecs_cluster="aws ecs describe-clusters --clusters ${STAGE_ECS_CLUSTER_NAME}"
+alias describe_prod_ecs_cluster="aws ecs describe-clusters --clusters ${PROD_ECS_CLUSTER_NAME}"
+alias list_prod_tasks="aws ecs list-tasks --cluster ${PROD_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "taskArns[*]""
+alias list_stage_tasks="aws ecs list-tasks --cluster ${STAGE_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "taskArns[*]""
+alias list_prod_ecs_services="aws ecs list-services --cluster ${PROD_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "serviceArns[*]""
+alias list_stage_ecs_services="aws ecs list-services --cluster ${STAGE_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "serviceArns[*]""
+
+# Aurora
+alias get_db_instance_arn="aws rds describe-db-instances --query 'DBInstances[?DBInstanceIdentifier==\"db-prod-2\"].DBInstanceArn' --output text"
+
+
+function list_stage_tasks_v2 {
+  TASK_ARNS=$(aws ecs list-tasks --cluster $STAGE_ECS_CLUSTER_NAME  --query "taskArns[]" --output text)
+  # Loop through each task and retrieve the service name
+  for TASK_ARN in $TASK_ARNS; do
+    SERVICE=$(aws ecs describe-tasks --cluster $STAGE_ECS_CLUSTER_NAME --tasks $TASK_ARN --query "tasks[0].group" --output text | awk -F':' '{print $2}')
+    echo "$TASK_ARN: $SERVICE"
+  done
+}
+
+function describe_a_task_in_prod() {
+  TASK_ID=$1
+  if [ -z ${TASK_ID} ];then
+    echo "USAGE: describe_a_task_in_prod <Task id>"
+    echo "Below are the current tasks running:";echo
+    aws ecs list-tasks --cluster ${PROD_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "taskArns[*]" | grep "arn:aws:ecs" | awk -F\/ '{print $NF}' | sed 's/\"//' | sed 's/,//'
+    echo
+  else
+      aws ecs describe-tasks --cluster ${PROD_ECS_CLUSTER_NAME} --tasks ${TASK_ID} --region ${AWS_REGION}
+  fi
+}
+
+function describe_a_task_in_stage() {
+  TASK_ID=$1
+  if [ -z ${TASK_ID} ];then
+    echo "USAGE: describe_a_task_in_prod <Task id>"
+    echo "Below are the current tasks running:";echo
+    aws ecs list-tasks --cluster ${STAGE_ECS_CLUSTER_NAME} --region ${AWS_REGION} --query "taskArns[*]" | grep "arn:aws:ecs" | awk -F\/ '{print $NF}' | sed 's/\"//' | sed 's/,//'
+    echo
+  else
+      aws ecs describe-tasks --cluster ${STAGE_ECS_CLUSTER_NAME} --tasks ${TASK_ID} --region ${AWS_REGION}
+  fi
+}
+

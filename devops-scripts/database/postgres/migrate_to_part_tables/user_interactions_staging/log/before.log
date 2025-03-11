@@ -1,0 +1,136 @@
+              now              
+-------------------------------
+ 2024-12-12 15:46:26.555062+00
+(1 row)
+
+            min             |            max             
+----------------------------+----------------------------
+ 2021-06-18 14:03:01.002007 | 2024-12-12 15:30:16.088967
+(1 row)
+
+              now              
+-------------------------------
+ 2024-12-12 15:46:26.716631+00
+(1 row)
+
+ count  
+--------
+ 609597
+(1 row)
+
+              now              
+-------------------------------
+ 2024-12-12 15:46:26.807167+00
+(1 row)
+
+                                                                                           QUERY PLAN                                                                                           
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=13768.65..13768.66 rows=1 width=8) (actual time=77.043..82.302 rows=1 loops=1)
+   Output: count(*)
+   ->  Gather  (cost=13768.43..13768.64 rows=2 width=8) (actual time=71.287..82.288 rows=3 loops=1)
+         Output: (PARTIAL count(*))
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate  (cost=12768.43..12768.44 rows=1 width=8) (actual time=66.108..66.108 rows=1 loops=3)
+               Output: PARTIAL count(*)
+               Worker 0:  actual time=64.472..64.473 rows=1 loops=1
+               Worker 1:  actual time=62.877..62.877 rows=1 loops=1
+               ->  Parallel Index Only Scan using user_interactions_pkey on public.user_interactions  (cost=0.42..12153.03 rows=246160 width=0) (actual time=0.071..51.400 rows=203199 loops=3)
+                     Output: id
+                     Heap Fetches: 27687
+                     Worker 0:  actual time=0.075..54.277 rows=180334 loops=1
+                     Worker 1:  actual time=0.110..53.160 rows=128440 loops=1
+ Query Identifier: 4182650408387758813
+ Planning Time: 0.062 ms
+ Execution Time: 82.342 ms
+(18 rows)
+
+              now              
+-------------------------------
+ 2024-12-12 15:46:26.892168+00
+(1 row)
+
+ to_char | count 
+---------+-------
+ 2024-12 |  2331
+ 2024-11 | 11312
+ 2024-10 |  3937
+ 2024-09 |  6926
+ 2024-08 | 11688
+ 2024-07 | 14754
+ 2024-06 | 12612
+ 2024-05 | 20905
+ 2024-04 | 11672
+ 2024-03 |  4732
+ 2024-02 |  8439
+ 2024-01 | 27145
+ 2023-12 |  6557
+ 2023-11 | 10735
+ 2023-10 | 14512
+ 2023-09 | 15428
+ 2023-08 | 62665
+ 2023-07 | 12562
+ 2023-06 |  6711
+ 2023-05 |  9404
+ 2023-04 |  7625
+ 2023-03 | 16975
+ 2023-02 | 10686
+ 2023-01 | 12360
+ 2022-12 |  9543
+ 2022-11 |  6509
+ 2022-10 | 11692
+ 2022-09 | 20994
+ 2022-08 | 19650
+ 2022-07 | 38576
+ 2022-06 | 19739
+ 2022-05 | 16868
+ 2022-04 | 17332
+ 2022-03 | 89789
+ 2022-02 | 11526
+ 2022-01 |  8949
+ 2021-12 |  1174
+ 2021-11 |   447
+ 2021-10 |   177
+ 2021-09 |  4707
+ 2021-08 |  3047
+ 2021-07 |  4847
+ 2021-06 |  1358
+(43 rows)
+
+              now              
+-------------------------------
+ 2024-12-12 15:46:27.504826+00
+(1 row)
+
+                                                                  QUERY PLAN                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=91765.66..103581.34 rows=590784 width=40) (actual time=465.421..663.176 rows=43 loops=1)
+   Output: (to_char(created_at, 'YYYY-MM'::text)), count(*)
+   Group Key: (to_char(user_interactions.created_at, 'YYYY-MM'::text))
+   ->  Sort  (cost=91765.66..93242.62 rows=590784 width=32) (actual time=464.052..593.546 rows=609597 loops=1)
+         Output: (to_char(created_at, 'YYYY-MM'::text))
+         Sort Key: (to_char(user_interactions.created_at, 'YYYY-MM'::text)) DESC
+         Sort Method: external merge  Disk: 10776kB
+         ->  Seq Scan on public.user_interactions  (cost=0.00..20995.80 rows=590784 width=32) (actual time=0.015..296.002 rows=609597 loops=1)
+               Output: to_char(created_at, 'YYYY-MM'::text)
+ Query Identifier: 8996601802805366143
+ Planning Time: 0.069 ms
+ Execution Time: 665.510 ms
+(12 rows)
+
+              now              
+-------------------------------
+ 2024-12-12 15:46:28.173225+00
+(1 row)
+
+ total_size 
+------------
+ 172 MB
+(1 row)
+
+                      indexname                      |                                                                    indexdef                                                                    
+-----------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------
+ user_interactions_pkey                              | CREATE UNIQUE INDEX user_interactions_pkey ON public.user_interactions USING btree (id)
+ user_interactions_user_profile_id_action_created_at | CREATE INDEX user_interactions_user_profile_id_action_created_at ON public.user_interactions USING btree (user_profile_id, action, created_at)
+(2 rows)
+

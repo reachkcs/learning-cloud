@@ -1,0 +1,374 @@
+              now              
+-------------------------------
+ 2024-12-08 08:46:01.487324-05
+(1 row)
+
+ANALYZE
+             now              
+------------------------------
+ 2024-12-08 08:46:23.21999-05
+(1 row)
+
+  count   
+----------
+ 36060000
+(1 row)
+
+              now              
+-------------------------------
+ 2024-12-08 08:46:23.967474-05
+(1 row)
+
+                                                                                                                            QUERY PLAN                                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=999131.03..999131.04 rows=1 width=8) (actual time=1040.892..1042.725 rows=1 loops=1)
+   Output: count(*)
+   ->  Gather  (cost=999130.81..999131.02 rows=2 width=8) (actual time=1040.705..1042.721 rows=3 loops=1)
+         Output: (PARTIAL count(*))
+         Workers Planned: 2
+         Workers Launched: 2
+         ->  Partial Aggregate  (cost=998130.81..998130.82 rows=1 width=8) (actual time=1030.773..1030.778 rows=1 loops=3)
+               Output: PARTIAL count(*)
+               Worker 0:  actual time=1025.930..1025.939 rows=1 loops=1
+               Worker 1:  actual time=1025.914..1025.918 rows=1 loops=1
+               ->  Parallel Append  (cost=0.43..960568.54 rows=15024908 width=0) (actual time=0.362..811.054 rows=12020000 loops=3)
+                     Worker 0:  actual time=0.194..807.318 rows=11957357 loops=1
+                     Worker 1:  actual time=0.545..807.355 rows=11958438 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_sep2024_pkey on public.user_interactions_backup_sep2024 user_interactions_backup_40  (cost=0.43..69532.52 rows=1180004 width=0) (actual time=0.194..113.188 rows=2832249 loops=1)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.194..113.188 rows=2832249 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_jul2024_pkey on public.user_interactions_backup_jul2024 user_interactions_backup_38  (cost=0.43..66326.19 rows=1125716 width=0) (actual time=0.544..108.411 rows=2701586 loops=1)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.544..108.411 rows=2701586 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_nov2024_pkey on public.user_interactions_backup_nov2024 user_interactions_backup_42  (cost=0.43..61768.37 rows=1048361 width=0) (actual time=0.067..96.364 rows=2515973 loops=1)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.067..96.364 rows=2515973 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_apr2024_pkey on public.user_interactions_backup_apr2024 user_interactions_backup_35  (cost=0.43..55750.70 rows=946285 width=0) (actual time=0.066..87.449 rows=2270673 loops=1)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.066..87.449 rows=2270673 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_oct2023_pkey on public.user_interactions_backup_oct2023 user_interactions_backup_29  (cost=0.43..54699.59 rows=928144 width=0) (actual time=0.075..85.428 rows=2228068 loops=1)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.075..85.428 rows=2228068 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_jun2024_pkey on public.user_interactions_backup_jun2024 user_interactions_backup_37  (cost=0.43..54359.15 rows=922488 width=0) (actual time=0.054..84.703 rows=2214303 loops=1)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.054..84.703 rows=2214303 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_may2024_pkey on public.user_interactions_backup_may2024 user_interactions_backup_36  (cost=0.43..43341.01 rows=735481 width=0) (actual time=0.078..67.420 rows=1765171 loops=1)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.078..67.420 rows=1765171 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_oct2024_pkey on public.user_interactions_backup_oct2024 user_interactions_backup_41  (cost=0.43..41911.18 rows=711216 width=0) (actual time=0.061..64.913 rows=1706839 loops=1)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.061..64.913 rows=1706839 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_sep2023_pkey on public.user_interactions_backup_sep2023 user_interactions_backup_28  (cost=0.43..39222.34 rows=665542 width=0) (actual time=0.076..60.895 rows=1597434 loops=1)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.076..60.895 rows=1597434 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_nov2023_pkey on public.user_interactions_backup_nov2023 user_interactions_backup_30  (cost=0.43..38861.24 rows=659492 width=0) (actual time=0.054..60.999 rows=1582626 loops=1)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.054..60.999 rows=1582626 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_mar2024_pkey on public.user_interactions_backup_mar2024 user_interactions_backup_34  (cost=0.43..37691.55 rows=639597 width=0) (actual time=0.064..19.788 rows=511648 loops=3)
+                           Heap Fetches: 0
+                           Worker 0:  actual time=0.095..48.525 rows=1263762 loops=1
+                           Worker 1:  actual time=0.054..5.429 rows=135459 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_jan2024_pkey on public.user_interactions_backup_jan2024 user_interactions_backup_32  (cost=0.43..34373.56 rows=583324 width=0) (actual time=0.052..26.964 rows=699988 loops=2)
+                           Heap Fetches: 0
+                           Worker 1:  actual time=0.059..42.318 rows=1101652 loops=1
+                     ->  Parallel Index Only Scan using user_interactions_backup_aug2024_pkey on public.user_interactions_backup_aug2024 user_interactions_backup_39  (cost=0.43..33715.10 rows=572121 width=0) (actual time=0.014..52.372 rows=1373026 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_dec2023_pkey on public.user_interactions_backup_dec2023 user_interactions_backup_31  (cost=0.43..28191.50 rows=478322 width=0) (actual time=0.014..43.491 rows=1147972 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_feb2024_pkey on public.user_interactions_backup_feb2024 user_interactions_backup_33  (cost=0.43..26654.46 rows=452274 width=0) (actual time=0.014..41.017 rows=1085458 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_aug2023_pkey on public.user_interactions_backup_aug2023 user_interactions_backup_27  (cost=0.42..20882.47 rows=354275 width=0) (actual time=0.018..32.112 rows=850260 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_may2023_pkey on public.user_interactions_backup_may2023 user_interactions_backup_24  (cost=0.42..20280.13 rows=343987 width=0) (actual time=0.019..31.355 rows=825568 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jul2023_pkey on public.user_interactions_backup_jul2023 user_interactions_backup_26  (cost=0.42..18902.50 rows=320640 width=0) (actual time=0.013..29.152 rows=769535 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jun2023_pkey on public.user_interactions_backup_jun2023 user_interactions_backup_25  (cost=0.42..15781.93 rows=267705 width=0) (actual time=0.014..24.379 rows=642491 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jan2023_pkey on public.user_interactions_backup_jan2023 user_interactions_backup_20  (cost=0.42..14045.25 rows=238219 width=0) (actual time=0.016..21.590 rows=571726 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_nov2022_pkey on public.user_interactions_backup_nov2022 user_interactions_backup_18  (cost=0.42..13488.37 rows=228725 width=0) (actual time=0.021..20.864 rows=548939 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_mar2022_pkey on public.user_interactions_backup_mar2022 user_interactions_backup_10  (cost=0.42..9907.82 rows=167972 width=0) (actual time=0.016..15.279 rows=403134 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_feb2023_pkey on public.user_interactions_backup_feb2023 user_interactions_backup_21  (cost=0.42..9716.49 rows=164730 width=0) (actual time=0.016..14.979 rows=395353 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_sep2022_pkey on public.user_interactions_backup_sep2022 user_interactions_backup_16  (cost=0.42..9104.13 rows=154350 width=0) (actual time=0.014..14.108 rows=370441 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_dec2022_pkey on public.user_interactions_backup_dec2022 user_interactions_backup_19  (cost=0.42..7850.81 rows=133018 width=0) (actual time=0.014..12.203 rows=319242 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_apr2023_pkey on public.user_interactions_backup_apr2023 user_interactions_backup_23  (cost=0.42..7703.52 rows=130505 width=0) (actual time=0.016..11.731 rows=313211 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_mar2023_pkey on public.user_interactions_backup_mar2023 user_interactions_backup_22  (cost=0.42..7602.91 rows=128840 width=0) (actual time=0.012..11.497 rows=309217 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_oct2022_pkey on public.user_interactions_backup_oct2022 user_interactions_backup_17  (cost=0.42..6894.52 rows=116822 width=0) (actual time=0.010..10.473 rows=280374 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_dec2024_pkey on public.user_interactions_backup_dec2024 user_interactions_backup_43  (cost=0.42..6881.32 rows=116586 width=0) (actual time=0.012..10.171 rows=279807 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jun2022_pkey on public.user_interactions_backup_jun2022 user_interactions_backup_13  (cost=0.42..5974.36 rows=101179 width=0) (actual time=0.010..9.094 rows=242830 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_may2022_pkey on public.user_interactions_backup_may2022 user_interactions_backup_12  (cost=0.42..5481.40 rows=92772 width=0) (actual time=0.009..8.113 rows=222652 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jul2022_pkey on public.user_interactions_backup_jul2022 user_interactions_backup_14  (cost=0.42..4999.21 rows=84672 width=0) (actual time=0.011..7.410 rows=203213 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_apr2022_pkey on public.user_interactions_backup_apr2022 user_interactions_backup_11  (cost=0.42..4825.48 rows=81685 width=0) (actual time=0.020..7.657 rows=196043 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_aug2022_pkey on public.user_interactions_backup_aug2022 user_interactions_backup_15  (cost=0.42..3523.73 rows=59605 width=0) (actual time=0.009..5.611 rows=143052 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_feb2022_pkey on public.user_interactions_backup_feb2022 user_interactions_backup_9  (cost=0.42..2942.35 rows=49724 width=0) (actual time=0.008..4.365 rows=119338 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Index Only Scan using user_interactions_backup_jan2022_pkey on public.user_interactions_backup_jan2022 user_interactions_backup_8  (cost=0.29..1796.29 rows=30363 width=0) (actual time=0.007..2.755 rows=72872 loops=1)
+                           Heap Fetches: 0
+                     ->  Parallel Seq Scan on public.user_interactions_backup_aug2021 user_interactions_backup_3  (cost=0.00..173.07 rows=5407 width=0) (actual time=0.233..2.288 rows=9192 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_jul2021 user_interactions_backup_2  (cost=0.00..88.28 rows=2828 width=0) (actual time=0.123..1.403 rows=4807 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_jun2021 user_interactions_backup_1  (cost=0.00..64.87 rows=2087 width=0) (actual time=0.171..1.749 rows=3548 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_sep2021 user_interactions_backup_4  (cost=0.00..53.28 rows=1628 width=0) (actual time=0.190..1.370 rows=2768 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_dec2021 user_interactions_backup_7  (cost=0.00..35.41 rows=1041 width=0) (actual time=0.179..1.413 rows=1770 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_nov2021 user_interactions_backup_6  (cost=0.00..24.15 rows=715 width=0) (actual time=0.155..0.843 rows=1216 loops=1)
+                     ->  Parallel Seq Scan on public.user_interactions_backup_oct2021 user_interactions_backup_5  (cost=0.00..21.49 rows=649 width=0) (actual time=0.347..1.062 rows=1103 loops=1)
+ Query Identifier: -2977749596648000652
+ Planning Time: 0.289 ms
+ Execution Time: 1042.773 ms
+(108 rows)
+
+              now              
+-------------------------------
+ 2024-12-08 08:46:25.013494-05
+(1 row)
+
+ to_char |  count  
+---------+---------
+ 2024-09 | 2832249
+ 2024-07 | 2701586
+ 2024-11 | 2515973
+ 2024-04 | 2270673
+ 2023-10 | 2228068
+ 2024-06 | 2214303
+ 2024-05 | 1765171
+ 2024-10 | 1706839
+ 2023-09 | 1597434
+ 2023-11 | 1582626
+ 2024-03 | 1534945
+ 2024-01 | 1399975
+ 2024-08 | 1373026
+ 2023-12 | 1147972
+ 2024-02 | 1085458
+ 2023-08 |  850260
+ 2023-05 |  825568
+ 2023-07 |  769535
+ 2023-06 |  642491
+ 2023-01 |  571726
+ 2022-11 |  548939
+ 2022-03 |  403134
+ 2023-02 |  395353
+ 2022-09 |  370441
+ 2022-12 |  319242
+ 2023-04 |  313211
+ 2023-03 |  309217
+ 2022-10 |  280374
+ 2024-12 |  279807
+ 2022-06 |  242830
+ 2022-05 |  222652
+ 2022-07 |  203213
+ 2022-04 |  196043
+ 2022-08 |  143052
+ 2022-02 |  119338
+ 2022-01 |   72872
+ 2021-08 |    9192
+ 2021-07 |    4807
+ 2021-06 |    3548
+ 2021-09 |    2768
+ 2021-12 |    1770
+ 2021-11 |    1216
+ 2021-10 |    1103
+(43 rows)
+
+            now             
+----------------------------
+ 2024-12-08 08:46:29.932-05
+(1 row)
+
+                                                                                                                                   QUERY PLAN                                                                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=15363375.53..15453524.98 rows=36059780 width=40) (actual time=5297.321..5297.376 rows=43 loops=1)
+   Output: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text)), (count(*))
+   Sort Key: (count(*)) DESC
+   Sort Method: quicksort  Memory: 27kB
+   ->  Finalize GroupAggregate  (cost=3509144.41..7879133.27 rows=36059780 width=40) (actual time=4286.192..5297.365 rows=43 loops=1)
+         Output: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text)), count(*)
+         Group Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+         ->  Gather Merge  (cost=3509144.41..7278136.94 rows=30049816 width=40) (actual time=4285.785..5297.342 rows=46 loops=1)
+               Output: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text)), (PARTIAL count(*))
+               Workers Planned: 2
+               Workers Launched: 2
+               ->  Partial GroupAggregate  (cost=3508144.38..3808642.54 rows=15024908 width=40) (actual time=4238.275..5150.873 rows=15 loops=3)
+                     Output: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text)), PARTIAL count(*)
+                     Group Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+                     Worker 0:  actual time=4238.763..5093.889 rows=6 loops=1
+                     Worker 1:  actual time=4279.055..5150.215 rows=7 loops=1
+                     ->  Sort  (cost=3508144.38..3545706.65 rows=15024908 width=32) (actual time=4151.087..4727.168 rows=12020000 loops=3)
+                           Output: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+                           Sort Key: (to_char(user_interactions_backup.created_at, 'YYYY-MM'::text))
+                           Sort Method: external merge  Disk: 212032kB
+                           Worker 0:  actual time=4106.199..4670.168 rows=12045057 loops=1
+                             Sort Method: external merge  Disk: 212184kB
+                           Worker 1:  actual time=4150.340..4729.358 rows=11978825 loops=1
+                             Sort Method: external merge  Disk: 211024kB
+                           ->  Parallel Append  (cost=0.43..998141.28 rows=15024908 width=32) (actual time=2.819..1989.499 rows=12020000 loops=3)
+                                 Worker 0:  actual time=4.162..1986.221 rows=12045057 loops=1
+                                 Worker 1:  actual time=4.284..1995.993 rows=11978825 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_sep2024_pkey on public.user_interactions_backup_sep2024 user_interactions_backup_40  (cost=0.43..72482.53 rows=1180004 width=32) (actual time=4.162..394.303 rows=2832249 loops=1)
+                                       Output: to_char(user_interactions_backup_40.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=4.162..394.303 rows=2832249 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jul2024_pkey on public.user_interactions_backup_jul2024 user_interactions_backup_38  (cost=0.43..69140.48 rows=1125716 width=32) (actual time=4.284..373.870 rows=2701586 loops=1)
+                                       Output: to_char(user_interactions_backup_38.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=4.284..373.870 rows=2701586 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_nov2024_pkey on public.user_interactions_backup_nov2024 user_interactions_backup_42  (cost=0.43..64389.27 rows=1048361 width=32) (actual time=0.078..364.381 rows=2515973 loops=1)
+                                       Output: to_char(user_interactions_backup_42.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=0.078..364.381 rows=2515973 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_apr2024_pkey on public.user_interactions_backup_apr2024 user_interactions_backup_35  (cost=0.43..58116.41 rows=946285 width=32) (actual time=0.075..313.024 rows=2270673 loops=1)
+                                       Output: to_char(user_interactions_backup_35.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=0.075..313.024 rows=2270673 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_oct2023_pkey on public.user_interactions_backup_oct2023 user_interactions_backup_29  (cost=0.43..57019.95 rows=928144 width=32) (actual time=0.079..300.654 rows=2228068 loops=1)
+                                       Output: to_char(user_interactions_backup_29.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=0.079..300.654 rows=2228068 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jun2024_pkey on public.user_interactions_backup_jun2024 user_interactions_backup_37  (cost=0.43..56665.38 rows=922488 width=32) (actual time=0.079..302.382 rows=2214303 loops=1)
+                                       Output: to_char(user_interactions_backup_37.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=0.079..302.382 rows=2214303 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_may2024_pkey on public.user_interactions_backup_may2024 user_interactions_backup_36  (cost=0.43..45179.71 rows=735481 width=32) (actual time=0.094..238.702 rows=1765171 loops=1)
+                                       Output: to_char(user_interactions_backup_36.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=0.094..238.702 rows=1765171 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_oct2024_pkey on public.user_interactions_backup_oct2024 user_interactions_backup_41  (cost=0.43..43689.22 rows=711216 width=32) (actual time=0.075..227.740 rows=1706839 loops=1)
+                                       Output: to_char(user_interactions_backup_41.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=0.075..227.740 rows=1706839 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_sep2023_pkey on public.user_interactions_backup_sep2023 user_interactions_backup_28  (cost=0.43..40886.20 rows=665542 width=32) (actual time=0.097..213.170 rows=1597434 loops=1)
+                                       Output: to_char(user_interactions_backup_28.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=0.097..213.170 rows=1597434 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_nov2023_pkey on public.user_interactions_backup_nov2023 user_interactions_backup_30  (cost=0.43..40509.97 rows=659492 width=32) (actual time=0.079..211.319 rows=1582626 loops=1)
+                                       Output: to_char(user_interactions_backup_30.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=0.079..211.319 rows=1582626 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_mar2024_pkey on public.user_interactions_backup_mar2024 user_interactions_backup_34  (cost=0.43..39290.55 rows=639597 width=32) (actual time=0.057..70.252 rows=511648 loops=3)
+                                       Output: to_char(user_interactions_backup_34.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 0:  actual time=0.078..182.884 rows=1351462 loops=1
+                                       Worker 1:  actual time=0.069..14.005 rows=90828 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jan2024_pkey on public.user_interactions_backup_jan2024 user_interactions_backup_32  (cost=0.43..35831.87 rows=583324 width=32) (actual time=0.047..95.573 rows=699988 loops=2)
+                                       Output: to_char(user_interactions_backup_32.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                       Worker 1:  actual time=0.085..158.921 rows=1166670 loops=1
+                                 ->  Parallel Index Only Scan using user_interactions_backup_aug2024_pkey on public.user_interactions_backup_aug2024 user_interactions_backup_39  (cost=0.43..35145.40 rows=572121 width=32) (actual time=0.018..183.831 rows=1373026 loops=1)
+                                       Output: to_char(user_interactions_backup_39.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_dec2023_pkey on public.user_interactions_backup_dec2023 user_interactions_backup_31  (cost=0.43..29387.31 rows=478322 width=32) (actual time=0.023..152.796 rows=1147972 loops=1)
+                                       Output: to_char(user_interactions_backup_31.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_feb2024_pkey on public.user_interactions_backup_feb2024 user_interactions_backup_33  (cost=0.43..27785.14 rows=452274 width=32) (actual time=0.206..146.235 rows=1085458 loops=1)
+                                       Output: to_char(user_interactions_backup_33.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_aug2023_pkey on public.user_interactions_backup_aug2023 user_interactions_backup_27  (cost=0.42..21768.16 rows=354275 width=32) (actual time=0.214..115.040 rows=850260 loops=1)
+                                       Output: to_char(user_interactions_backup_27.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_may2023_pkey on public.user_interactions_backup_may2023 user_interactions_backup_24  (cost=0.42..21140.10 rows=343987 width=32) (actual time=0.184..111.921 rows=825568 loops=1)
+                                       Output: to_char(user_interactions_backup_24.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jul2023_pkey on public.user_interactions_backup_jul2023 user_interactions_backup_26  (cost=0.42..19704.10 rows=320640 width=32) (actual time=0.215..105.666 rows=769535 loops=1)
+                                       Output: to_char(user_interactions_backup_26.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jun2023_pkey on public.user_interactions_backup_jun2023 user_interactions_backup_25  (cost=0.42..16451.19 rows=267705 width=32) (actual time=0.183..97.886 rows=642491 loops=1)
+                                       Output: to_char(user_interactions_backup_25.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jan2023_pkey on public.user_interactions_backup_jan2023 user_interactions_backup_20  (cost=0.42..14640.79 rows=238219 width=32) (actual time=0.196..77.234 rows=571726 loops=1)
+                                       Output: to_char(user_interactions_backup_20.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_nov2022_pkey on public.user_interactions_backup_nov2022 user_interactions_backup_18  (cost=0.42..14060.18 rows=228725 width=32) (actual time=0.191..74.018 rows=548939 loops=1)
+                                       Output: to_char(user_interactions_backup_18.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_mar2022_pkey on public.user_interactions_backup_mar2022 user_interactions_backup_10  (cost=0.42..10327.75 rows=167972 width=32) (actual time=0.184..54.456 rows=403134 loops=1)
+                                       Output: to_char(user_interactions_backup_10.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_feb2023_pkey on public.user_interactions_backup_feb2023 user_interactions_backup_21  (cost=0.42..10128.32 rows=164730 width=32) (actual time=0.195..53.438 rows=395353 loops=1)
+                                       Output: to_char(user_interactions_backup_21.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_sep2022_pkey on public.user_interactions_backup_sep2022 user_interactions_backup_16  (cost=0.42..9490.01 rows=154350 width=32) (actual time=0.197..50.002 rows=370441 loops=1)
+                                       Output: to_char(user_interactions_backup_16.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_dec2022_pkey on public.user_interactions_backup_dec2022 user_interactions_backup_19  (cost=0.42..8183.35 rows=133018 width=32) (actual time=0.199..43.631 rows=319242 loops=1)
+                                       Output: to_char(user_interactions_backup_19.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_apr2023_pkey on public.user_interactions_backup_apr2023 user_interactions_backup_23  (cost=0.42..8029.79 rows=130505 width=32) (actual time=0.189..42.364 rows=313211 loops=1)
+                                       Output: to_char(user_interactions_backup_23.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_mar2023_pkey on public.user_interactions_backup_mar2023 user_interactions_backup_22  (cost=0.42..7925.01 rows=128840 width=32) (actual time=0.181..41.735 rows=309217 loops=1)
+                                       Output: to_char(user_interactions_backup_22.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_oct2022_pkey on public.user_interactions_backup_oct2022 user_interactions_backup_17  (cost=0.42..7186.57 rows=116822 width=32) (actual time=0.340..38.457 rows=280374 loops=1)
+                                       Output: to_char(user_interactions_backup_17.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_dec2024_pkey on public.user_interactions_backup_dec2024 user_interactions_backup_43  (cost=0.42..7172.78 rows=116586 width=32) (actual time=0.306..38.196 rows=279807 loops=1)
+                                       Output: to_char(user_interactions_backup_43.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jun2022_pkey on public.user_interactions_backup_jun2022 user_interactions_backup_13  (cost=0.42..6227.31 rows=101179 width=32) (actual time=0.194..32.861 rows=242830 loops=1)
+                                       Output: to_char(user_interactions_backup_13.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_may2022_pkey on public.user_interactions_backup_may2022 user_interactions_backup_12  (cost=0.42..5713.33 rows=92772 width=32) (actual time=0.187..30.364 rows=222652 loops=1)
+                                       Output: to_char(user_interactions_backup_12.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jul2022_pkey on public.user_interactions_backup_jul2022 user_interactions_backup_14  (cost=0.42..5210.89 rows=84672 width=32) (actual time=0.667..28.412 rows=203213 loops=1)
+                                       Output: to_char(user_interactions_backup_14.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_apr2022_pkey on public.user_interactions_backup_apr2022 user_interactions_backup_11  (cost=0.42..5029.69 rows=81685 width=32) (actual time=0.202..27.141 rows=196043 loops=1)
+                                       Output: to_char(user_interactions_backup_11.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_aug2022_pkey on public.user_interactions_backup_aug2022 user_interactions_backup_15  (cost=0.42..3672.74 rows=59605 width=32) (actual time=0.202..19.925 rows=143052 loops=1)
+                                       Output: to_char(user_interactions_backup_15.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_feb2022_pkey on public.user_interactions_backup_feb2022 user_interactions_backup_9  (cost=0.42..3066.66 rows=49724 width=32) (actual time=0.299..16.411 rows=119338 loops=1)
+                                       Output: to_char(user_interactions_backup_9.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Index Only Scan using user_interactions_backup_jan2022_pkey on public.user_interactions_backup_jan2022 user_interactions_backup_8  (cost=0.29..1872.19 rows=30363 width=32) (actual time=0.380..10.553 rows=72872 loops=1)
+                                       Output: to_char(user_interactions_backup_8.created_at, 'YYYY-MM'::text)
+                                       Heap Fetches: 0
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_aug2021 user_interactions_backup_3  (cost=0.00..186.59 rows=5407 width=32) (actual time=0.003..1.656 rows=9192 loops=1)
+                                       Output: to_char(user_interactions_backup_3.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_jul2021 user_interactions_backup_2  (cost=0.00..95.35 rows=2828 width=32) (actual time=0.003..0.884 rows=4807 loops=1)
+                                       Output: to_char(user_interactions_backup_2.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_jun2021 user_interactions_backup_1  (cost=0.00..70.09 rows=2087 width=32) (actual time=0.003..0.650 rows=3548 loops=1)
+                                       Output: to_char(user_interactions_backup_1.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_sep2021 user_interactions_backup_4  (cost=0.00..57.35 rows=1628 width=32) (actual time=0.003..0.525 rows=2768 loops=1)
+                                       Output: to_char(user_interactions_backup_4.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_dec2021 user_interactions_backup_7  (cost=0.00..38.01 rows=1041 width=32) (actual time=0.003..0.335 rows=1770 loops=1)
+                                       Output: to_char(user_interactions_backup_7.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_nov2021 user_interactions_backup_6  (cost=0.00..25.94 rows=715 width=32) (actual time=0.003..0.237 rows=1216 loops=1)
+                                       Output: to_char(user_interactions_backup_6.created_at, 'YYYY-MM'::text)
+                                 ->  Parallel Seq Scan on public.user_interactions_backup_oct2021 user_interactions_backup_5  (cost=0.00..23.11 rows=649 width=32) (actual time=0.012..0.228 rows=1103 loops=1)
+                                       Output: to_char(user_interactions_backup_5.created_at, 'YYYY-MM'::text)
+ Query Identifier: 6432922665668584304
+ Planning Time: 0.543 ms
+ Execution Time: 5335.666 ms
+(165 rows)
+
+              now              
+-------------------------------
+ 2024-12-08 08:46:35.290557-05
+(1 row)
+
+ total_size 
+------------
+ 0 bytes
+(1 row)
+
+             indexname              |                                                          indexdef                                                           
+------------------------------------+-----------------------------------------------------------------------------------------------------------------------------
+ user_interactions_backup_part_pkey | CREATE UNIQUE INDEX user_interactions_backup_part_pkey ON ONLY public.user_interactions_backup USING btree (id, created_at)
+(1 row)
+

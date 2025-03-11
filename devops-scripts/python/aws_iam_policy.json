@@ -1,0 +1,45 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBLogFiles",
+        "rds:DownloadDBLogFilePortion",
+        "rds:DescribeDBClusters",
+        "rds:DescribeEvents",
+        "logs:DescribeLogGroups",
+        "logs:StartQuery",
+        "logs:GetQueryResults",
+        "ecs:ListClusters",
+        "ecs:ListTasks",
+        "ecs:DescribeTasks",
+        "ecs:ListServices",
+        "ecs:DescribeServices",
+        "ec2:DescribeInstances",
+        "ec2:DescribeVpcs",
+        "s3:ListAllMyBuckets",
+        "lambda:ListFunctions",
+        "dynamodb:ListTables",
+        "iam:ListUsers",
+        "sns:ListTopics",
+        "sqs:ListQueues",
+        "cloudfront:ListDistributions",
+        "lightsail:GetInstances",
+        "amplify:ListApps",
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticache:DescribeCacheClusters",
+        "route53:ListHostedZones",
+        "kms:ListKeys",
+        "ecr:DescribeRepositories",
+        "ses:ListIdentities",
+        "ce:GetCostAndUsage",
+	"pi:DescribeDimensionKeys",
+	"pi:GetResourceMetrics"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
