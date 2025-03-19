@@ -1,0 +1,23 @@
+# .screenrc for DevOps UNIX user
+
+# Start with useful settings
+startup_message off  # Disable startup message
+defscrollback 10000  # Set scrollback buffer size
+
+# Define windows
+screen -t "KCS" 0
+screen -t "DevOps" 1
+screen -t "DevOps" 2
+screen -t "DevOps" 3
+screen -t "Root" 2 sudo -i
+
+# Enable status line
+hardstatus alwayslastline
+hardstatus string "%{= rw}%-w%{= BW}%n %t%{-}%+w %= %H %Y-%m-%d %c"
+
+shelltitle "bash"
+termcapinfo * 'hs:ts=\E]2;:fs=\007:ds=\E]2;\007'
+
+# Keybindings for convenience
+bind c screen  # Allow creating new windows with `Ctrl-A c`
+bind k kill    # Allow killing a window with `Ctrl-A k`

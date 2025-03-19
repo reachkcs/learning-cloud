@@ -1,0 +1,6 @@
+  terragrunt init
+  terragrunt plan
+  terragrunt apply -auto-approve
+  terragrunt destroy -auto-approve
+  # This will destroy all resources in all modules under the current directory, working through dependencies in the right order.
+  terragrunt destroy-all
