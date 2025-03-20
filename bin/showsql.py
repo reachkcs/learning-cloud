@@ -5,13 +5,15 @@ import sys
 import subprocess
 
 # Define the directory containing SQL files
-SDIR = os.getenv("SDIR")
+SDIR = os.getenv("TOOLS_DIR")
 if not SDIR:
-    print("Error: SDIR environment variable is not set.")
+    print("Error: TOOLS_DIR environment variable is not set.")
     exit(1)
 
-SQL_DIR = os.path.join(SDIR, "devops-scripts/database/postgres/sql")
-TEMP_DIR = os.path.join("/tmp")
+SQL_DIR = os.path.join(SDIR, "sql")
+TEMP_DIR = "/tmp"
+print(f"SDIR: {SDIR}")
+print(f"SQL Directory: {SQL_DIR}")
 
 def list_sql_files(directory, filter_str=None):
     """List all .sql files in the given directory, optionally filtered by a string."""

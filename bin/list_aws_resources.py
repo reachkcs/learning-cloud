@@ -1,130 +1,134 @@
 #!/usr/bin/python3
+
 import boto3
-import os
+import sys
+from tabulate import tabulate
 
-def list_vpcs(ec2_client):
-    print("Listing VPCs:")
-    vpcs = ec2_client.describe_vpcs()['Vpcs']
-    for vpc in vpcs:
-        print(f"\tVPC ID: {vpc['VpcId']}, CIDR: {vpc['CidrBlock']}")
-
-def list_ec2_instances(ec2_client):
-    print("Listing EC2 Instances:")
-    instances = ec2_client.describe_instances()['Reservations']
-    for reservation in instances:
+def list_ec2_instances():
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.describe_instances()
+    
+    instances = []
+    for reservation in response['Reservations']:
         for instance in reservation['Instances']:
-            print(f"\tInstance ID: {instance['InstanceId']}, State: {instance['State']['Name']}")
-
-def list_load_balancers(elbv2_client):
-    print("Listing Load Balancers:")
-    load_balancers = elbv2_client.describe_load_balancers()['LoadBalancers']
-    for lb in load_balancers:
-        print(f"\tLoad Balancer Name: {lb['LoadBalancerName']}, ARN: {lb['LoadBalancerArn']}")
-
-def list_security_groups(ec2_client):
-    print("Listing Security Groups:")
-    security_groups = ec2_client.describe_security_groups()['SecurityGroups']
-    for sg in security_groups:
-        print(f"\tSecurity Group ID: {sg['GroupId']}, Name: {sg['GroupName']}")
-
-def list_endpoints(ec2_client):
-    print("Listing Endpoints:")
-    endpoints = ec2_client.describe_vpc_endpoints()['VpcEndpoints']
-    for endpoint in endpoints:
-        print(f"\tEndpoint ID: {endpoint['VpcEndpointId']}, Service: {endpoint['ServiceName']}")
-
-def list_endpoint_services(ec2_client):
-    print("Listing Endpoint Services:")
-    endpoint_services = ec2_client.describe_vpc_endpoint_services()['ServiceDetails']
-    for service in endpoint_services:
-        print(f"\tService Name: {service['ServiceName']}")
-
-def list_s3_buckets(s3_client):
-    print("Listing S3 Buckets:")
-    buckets = s3_client.list_buckets()['Buckets']
-    for bucket in buckets:
-        print(f"\tBucket Name: {bucket['Name']}")
-
-def list_subnets(ec2_client):
-    print("Listing Subnets:")
-    subnets = ec2_client.describe_subnets()['Subnets']
-    for subnet in subnets:
-        print(f"\tSubnet ID: {subnet['SubnetId']}, CIDR: {subnet['CidrBlock']}")
-
-def list_route_tables(ec2_client):
-    print("Listing Route Tables:")
-    route_tables = ec2_client.describe_route_tables()['RouteTables']
-    for rt in route_tables:
-        print(f"\tRoute Table ID: {rt['RouteTableId']}")
-
-def list_target_groups(elbv2_client):
-    print("Listing Target Groups:")
-    target_groups = elbv2_client.describe_target_groups()['TargetGroups']
-    for tg in target_groups:
-        print(f"\tTarget Group Name: {tg['TargetGroupName']}, ARN: {tg['TargetGroupArn']}")
-
-def list_listeners(elbv2_client):
-    print("Listing Listeners:")
+            name = "N/A"
+            for tag in instance.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    name = tag['Value']
+                    break
+            instances.append([
+                instance['InstanceId'],
+                name,
+                instance['State']['Name'],
+                instance['InstanceType'],
+                instance.get('PublicIpAddress', 'N/A'),
+                instance.get('PrivateIpAddress', 'N/A')
+            ])
     
-    # First, list all load balancers to get their ARNs
-    load_balancers = elbv2_client.describe_load_balancers()['LoadBalancers']
-    
-    for lb in load_balancers:
-        load_balancer_arn = lb['LoadBalancerArn']
-        print(f"\tLoad Balancer ARN: {load_balancer_arn}")
+    return instances
+
+import boto3
+
+def list_rds_instances():
+    rds_client = boto3.client('rds')
+    response = rds_client.describe_db_instances()
+
+    db_instances = []
+    for db_instance in response['DBInstances']:
+        db_name = db_instance.get('DBName', 'N/A')
+        db_instance_id = db_instance['DBInstanceIdentifier']
+        db_status = db_instance['DBInstanceStatus']
+        db_engine = db_instance['Engine']
+        db_instance_type = db_instance['DBInstanceClass']
+        db_endpoint = db_instance.get('Endpoint', {}).get('Address', 'N/A')
+        db_port = db_instance.get('Endpoint', {}).get('Port', 'N/A')
         
-        # Now, describe listeners for this load balancer
-        listeners = elbv2_client.describe_listeners(LoadBalancerArn=load_balancer_arn)['Listeners']
-        for listener in listeners:
-            print(f"\tListener ARN: {listener['ListenerArn']}, Port: {listener['Port']}, Protocol: {listener['Protocol']}")
+        db_instances.append([
+            db_instance_id,
+            db_name,
+            db_status,
+            db_engine,
+            db_instance_type,
+            db_endpoint,
+            db_port
+        ])
 
-def list_route53_zones(route53_client):
-    print("Listing Route53 Hosted Zones:")
-    hosted_zones = route53_client.list_hosted_zones()['HostedZones']
-    for zone in hosted_zones:
-        print(f"\tHosted Zone ID: {zone['Id']}, Name: {zone['Name']}")
+    return db_instances
 
-def list_cloudfront_distributions(cloudfront_client):
-    print("Listing CloudFront Distributions:")
-    response = cloudfront_client.list_distributions()
+
+def list_dms_tasks():
+    dms_client = boto3.client('dms')
+    response = dms_client.describe_replication_tasks()
     
-    # Check if 'Items' key exists in the response
-    if 'Items' in response['DistributionList']:
-        distributions = response['DistributionList']['Items']
-        for dist in distributions:
-            print(f"\tDistribution ID: {dist['Id']}, Domain: {dist['DomainName']}")
-    else:
-        print("No CloudFront distributions found.")
+    tasks = []
+    for task in response['ReplicationTasks']:
+        tasks.append([
+            task['ReplicationTaskIdentifier'],
+            task['ReplicationTaskArn'],
+            task['Status']
+        ])
+    
+    return tasks
 
-def list_certificates(acm_client):
-    print("Listing ACM Certificates:")
-    certificates = acm_client.list_certificates()['CertificateSummaryList']
-    for cert in certificates:
-        print(f"\tCertificate ARN: {cert['CertificateArn']}, Domain: {cert['DomainName']}")
+def get_ec2_details(instance_id):
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            name = "N/A"
+            for tag in instance.get('Tags', []):
+                if tag['Key'] == 'Name':
+                    name = tag['Value']
+                    break
+            print(f"Instance ID: {instance['InstanceId']}")
+            print(f"Name: {name}")
+            print(f"State: {instance['State']['Name']}")
+            print(f"Instance Type: {instance['InstanceType']}")
+            print(f"Public IP: {instance.get('PublicIpAddress', 'N/A')}")
+            print(f"Private IP: {instance.get('PrivateIpAddress', 'N/A')}")
+            print("-")
 
-def main():
-    aws_region = os.getenv('AWS_REGION')
-    ec2_client = boto3.client('ec2', region_name=aws_region)
-    elbv2_client = boto3.client('elbv2', region_name=aws_region)
-    s3_client = boto3.client('s3', region_name=aws_region)
-    route53_client = boto3.client('route53', region_name=aws_region)
-    cloudfront_client = boto3.client('cloudfront', region_name=aws_region)
-    acm_client = boto3.client('acm', region_name=aws_region)
-
-    list_vpcs(ec2_client)
-    list_ec2_instances(ec2_client)
-    list_load_balancers(elbv2_client)
-    list_security_groups(ec2_client)
-    list_endpoints(ec2_client)
-    list_endpoint_services(ec2_client)
-    list_s3_buckets(s3_client)
-    list_subnets(ec2_client)
-    list_route_tables(ec2_client)
-    list_target_groups(elbv2_client)
-    list_listeners(elbv2_client)
-    list_route53_zones(route53_client)
-    list_cloudfront_distributions(cloudfront_client)
-    list_certificates(acm_client)
+def get_dms_task_details(task_id):
+    dms_client = boto3.client('dms')
+    response = dms_client.describe_replication_tasks(Filters=[{"Name": "replication-task-id", "Values": [task_id]}])
+    
+    for task in response['ReplicationTasks']:
+        print(f"Task ID: {task['ReplicationTaskIdentifier']}")
+        print(f"Task ARN: {task['ReplicationTaskArn']}")
+        print(f"Status: {task['Status']}")
+        print("-")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <1 for EC2 | 2 for DMS tasks | 3 for EC2 details | 4 for DMS details> [instance/task ID]")
+        sys.exit(1)
+    
+    option = sys.argv[1]
+    
+    if option == "1":
+        instances = list_ec2_instances()
+        headers = ["Instance ID", "Name", "State", "Instance Type", "Public IP", "Private IP"]
+        print(tabulate(instances, headers=headers, tablefmt="pretty", stralign="left"))
+    elif option == "2":
+        tasks = list_dms_tasks()
+        headers = ["Task ID", "Task ARN", "Status"]
+        print(tabulate(tasks, headers=headers, tablefmt="pretty", stralign="left"))
+    elif option == "3":
+        rds_instances = list_rds_instances()
+        headers = ["Instance Id", "Name", "Status", "Engine", "Instance Type", "Endpoint", "Port"]
+        print(tabulate(rds_instances, headers=headers, tablefmt="pretty", stralign="left"))
+    elif option == "103":
+        if len(sys.argv) != 3:
+            print("Usage: python script.py 3 <EC2 Instance ID>")
+            sys.exit(1)
+        get_ec2_details(sys.argv[2])
+    elif option == "104":
+        if len(sys.argv) != 3:
+            print("Usage: python script.py 4 <DMS Task ID>")
+            sys.exit(1)
+        get_dms_task_details(sys.argv[2])
+    else:
+        print("Invalid option. Usage: python script.py <1 for EC2 | 2 for DMS tasks | 3 for EC2 details | 4 for DMS details>")
+        sys.exit(1)
+
