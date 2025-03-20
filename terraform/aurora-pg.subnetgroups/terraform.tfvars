@@ -1,0 +1,5 @@
+vpc_id     = "vpc-00a8f4c60368f58aa"
+primary_subnet_group = "primary-subnet-group"
+secondary_subnet_group = "secondary-subnet-group"
+secondary_vpc_id = "vpc-0165f329a747b10ad"
+public_subnet_id = "subnet-06afee81c2a516bc6"
