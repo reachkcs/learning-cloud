@@ -3,9 +3,11 @@
 import boto3
 import sys
 from tabulate import tabulate
+import os
 
 def list_ec2_instances():
-    ec2_client = boto3.client('ec2')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    ec2_client = boto3.client('ec2', region_name=aws_region)
     response = ec2_client.describe_instances()
     
     instances = []
@@ -27,10 +29,9 @@ def list_ec2_instances():
     
     return instances
 
-import boto3
-
 def list_rds_instances():
-    rds_client = boto3.client('rds')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    rds_client = boto3.client('rds', region_name=aws_region)
     response = rds_client.describe_db_instances()
 
     db_instances = []
@@ -57,7 +58,8 @@ def list_rds_instances():
 
 
 def list_dms_tasks():
-    dms_client = boto3.client('dms')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    dms_client = boto3.client('dms', region_name=aws_region)
     response = dms_client.describe_replication_tasks()
     
     tasks = []
@@ -71,7 +73,8 @@ def list_dms_tasks():
     return tasks
 
 def list_vpcs():
-    ec2_client = boto3.client('ec2')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    ec2_client = boto3.client('ec2', region_name=aws_region)
     response = ec2_client.describe_vpcs()
 
     vpcs = []
@@ -95,7 +98,8 @@ def list_vpcs():
     return vpcs
 
 def list_subnets():
-    ec2_client = boto3.client('ec2')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    ec2_client = boto3.client('ec2', region_name=aws_region)
     response = ec2_client.describe_subnets()
     subnets = []   
     for subnet in response['Subnets']:
@@ -119,7 +123,8 @@ def list_subnets():
     return subnets
 
 def list_aurora_clusters():
-    rds_client = boto3.client('rds')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    rds_client = boto3.client('rds', region_name=aws_region)
     response = rds_client.describe_db_clusters()
     clusters = []
     for cluster in response['DBClusters']:
@@ -139,7 +144,8 @@ def list_aurora_clusters():
 # Function to get details
 #
 def get_ec2_details(instance_id):
-    ec2_client = boto3.client('ec2')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    ec2_client = boto3.client('ec2', region_name=aws_region)
     response = ec2_client.describe_instances(InstanceIds=[instance_id])
     
     for reservation in response['Reservations']:
@@ -158,7 +164,8 @@ def get_ec2_details(instance_id):
             print("-")
 
 def get_dms_task_details(task_id):
-    dms_client = boto3.client('dms')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    dms_client = boto3.client('dms', region_name=aws_region)
     response = dms_client.describe_replication_tasks(Filters=[{"Name": "replication-task-id", "Values": [task_id]}])
     
     for task in response['ReplicationTasks']:
@@ -168,7 +175,8 @@ def get_dms_task_details(task_id):
         print("-")
 
 def get_rds_cluster_details(cluster_id):
-    rds_client = boto3.client('rds')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    rds_client = boto3.client('rds', region_name=aws_region)
     response = rds_client.describe_db_clusters(DBClusterIdentifier=cluster_id)
     
     for cluster in response['DBClusters']:
@@ -195,7 +203,8 @@ def get_rds_cluster_details(cluster_id):
         print("-")
 
 def get_subnet_group_details(subnet_group_name):
-    rds_client = boto3.client('rds')
+    aws_region = os.getenv("AWS_REGION", "us-east-1")
+    rds_client = boto3.client('rds', region_name=aws_region)
     response = rds_client.describe_db_subnet_groups(DBSubnetGroupName=subnet_group_name)
     
     for subnet_group in response['DBSubnetGroups']:
