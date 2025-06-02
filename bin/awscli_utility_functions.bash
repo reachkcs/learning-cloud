@@ -5,6 +5,38 @@ alias login_to_prod='aws sso login --profile DBA_Admin-Dev-254092030674'
 # AWS DMS
 alias dms-desc-rep-tasks='aws dms describe-replication-tasks --query "ReplicationTasks[*].[ReplicationTaskIdentifier,ReplicationTaskArn,Status]" --output table'
 
+function stop-dms-task() {
+    if [ -z "$1" ]; then
+        echo "Usage: stop_dms_task <ReplicationTaskIdentifier>"
+        echo "You can list DMS tasks using: dms-desc-rep-tasks"
+        echo "Example: stop_dms_task arn:aws:dms:us-east-1:123456789012:task:EXAMPLE"
+        return 1
+    fi
+    local TASK_ID="$1"
+    aws dms stop-replication-task --replication-task-arn "$TASK_ID"
+}
+
+function start-dms-task() {
+    if [ -z "$1" ]; then
+        echo "Usage: start_dms_task <ReplicationTaskIdentifier>"
+        echo "You can list DMS tasks using: dms-desc-rep-tasks"
+        echo "Example: start_dms_task arn:aws:dms:us-east-1:123456789012:task:EXAMPLE"
+        return 1
+    fi
+    local TASK_ID="$1"
+    aws dms start-replication-task --replication-task-arn "$TASK_ID" --start-replication-task-type reload-target
+}
+
+function restart-dms-task() {
+    if [ -z "$1" ]; then
+        echo "Usage: restart_dms_task <ReplicationTaskIdentifier>"
+        return 1
+    fi
+    local TASK_ID="$1"
+    stop_dms_task "$TASK_ID"
+    start_dms_task "$TASK_ID"
+}
+
 # Bash functions
 function switch_aws_profile() {
     if [[ $# -eq 0 ]]; then
@@ -196,6 +228,8 @@ function switch_pg() {
 function connect_ec2() {
     if [ -z "$1" ]; then
         echo "Usage: connect_ec2 <instance-id>"
+        echo "If you are looking for DMS EC2s, here they are:"
+        list_ec2_instances  | grep -i dms
         return 1
     fi
 
@@ -211,3 +245,11 @@ function connect_ec2() {
     fi
 }
 
+function list_ec2_instances() {
+    if [ -z "$AWS_PROFILE" ]; then
+        echo "Please set the AWS_PROFILE environment variable before running this command."
+        return 1
+    fi
+    echo "Listing EC2 instances in profile: $AWS_PROFILE"
+    aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value | [0]]" --output table
+}
