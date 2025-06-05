@@ -1,13 +1,29 @@
 import psycopg2
 import os
 from datetime import datetime
+import argparse
 
-# Database connection parameters - update these with your credentials
-DB_HOST = os.environ.get("PGHOST")
-DB_PORT = os.environ.get("PGPORT")
-DB_NAME = os.environ.get("PGDATABASE")
-DB_USER = os.environ.get("PGUSER")
-DB_PASSWORD = os.environ.get("PGPASSWORD")
+
+# Set up argument parser
+parser = argparse.ArgumentParser(description="Database connection parameters")
+
+parser.add_argument("--host", dest="DB_HOST", required=True, help="Database host")
+parser.add_argument("--port", dest="DB_PORT", required=True, help="Database port")
+parser.add_argument("--name", dest="DB_NAME", required=True, help="Database name")
+parser.add_argument("--user", dest="DB_USER", required=True, help="Database user")
+parser.add_argument("--password", dest="DB_PASSWORD", required=True, help="Database password")
+parser.add_argument("--clustername", dest="CLUSTER_NAME", required=True, help="Cluster name")
+
+# Parse arguments
+args = parser.parse_args()
+
+# Assign values
+DB_HOST = args.DB_HOST
+DB_PORT = args.DB_PORT
+DB_NAME = args.DB_NAME
+DB_USER = args.DB_USER
+DB_PASSWORD = args.DB_PASSWORD
+CLUSTER_NAME = args.CLUSTER_NAME
 
 query = """
 SELECT
@@ -32,7 +48,7 @@ def get_db_size():
         cur.execute(query)
         result = cur.fetchone()
 
-        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), result[0], result[1], result[2], sep='\t')
+        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), CLUSTER_NAME, result[0], result[1], result[2], sep='\t')
 
         cur.close()
         conn.close()
