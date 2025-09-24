@@ -16,6 +16,44 @@ function stop-dms-task() {
     aws dms stop-replication-task --replication-task-arn "$TASK_ID"
 }
 
+function stop_prod_dms_tasks() {
+    cat <<EOF
+    Copy and paste the following commands to stop all production DMS tasks:
+
+stop-dms-task arn:aws:dms:us-east-1:502397910358:task:EYJEGNADW77XSBTUIHLZ56SANWZ5YP7543NWSUI
+stop-dms-task arn:aws:dms:us-east-1:502397910358:task:MMESGF6GMIUZZONQCZD4IZWD62JTEE62YIXLAZY
+stop-dms-task arn:aws:dms:us-east-1:502397910358:task:T2RQJK6CHNCTSWPHNDHP3BJJDEECEU5QNF6INQQ
+stop-dms-task arn:aws:dms:us-east-1:502397910358:task:AJ6PQLVSNBNKDTFMQFGFCB44WOZPZ2LCARY64DY
+EOF
+}
+
+function start_prod_dms_tasks() {
+    cat <<EOF
+    Copy and paste the following commands to start all production DMS tasks:
+
+start-dms-task arn:aws:dms:us-east-1:502397910358:task:EYJEGNADW77XSBTUIHLZ56SANWZ5YP7543NWSUI
+start-dms-task arn:aws:dms:us-east-1:502397910358:task:MMESGF6GMIUZZONQCZD4IZWD62JTEE62YIXLAZY
+start-dms-task arn:aws:dms:us-east-1:502397910358:task:T2RQJK6CHNCTSWPHNDHP3BJJDEECEU5QNF6INQQ
+start-dms-task arn:aws:dms:us-east-1:502397910358:task:AJ6PQLVSNBNKDTFMQFGFCB44WOZPZ2LCARY64DY
+EOF
+}
+
+function stop_sbx_dms_task() {
+    cat <<EOF
+    Copy and paste the following command to stop the SBX DMS task:
+
+stop-dms-task arn:aws:dms:us-east-1:502397910358:task:OZ7KX5ZK6JH3FQKX2Y5KX7ZK4Y3V7Y3Y3Y3Y3Y3Y}
+EOF
+}
+
+function start_sbx_dms_task() {
+    cat <<EOF
+    Copy and paste the following command to start the SBX DMS task: 
+
+start-dms-task arn:aws:dms:us-east-1:502397910358:task:OZ7KX5ZK6JH3FQKX2Y5KX7ZK4Y3V7Y3Y3Y3Y3Y3Y}
+EOF
+}
+
 function start-dms-task() {
     if [ -z "$1" ]; then
         echo "Usage: start_dms_task <ReplicationTaskIdentifier>"
@@ -245,6 +283,30 @@ function connect_ec2() {
     fi
 }
 
+function ec2_connect() {
+    echo "Available EC2 instances:"
+    #list_ec2_instances | grep -i dms | awk 'NR>2 {print NR-2 ") " $1 " - " $3}' | grep -v '^$'
+    list_ec2_instances | grep -i dms | awk 'NR>2 {print NR-2 ") " $1 " - " $2}' | grep -v '^$'
+    
+    echo
+    read -p "Enter the number of the EC2 instance to connect: " CHOICE
+
+    INSTANCE_ID=$(list_ec2_instances | grep -i dms | awk 'NR>2 {print $1}' | sed -n "${CHOICE}p")
+
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "Invalid selection."
+        return 1
+    fi
+
+    echo "Connecting to EC2 instance: $INSTANCE_ID via SSM..."
+    aws ssm start-session --target "$INSTANCE_ID"
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to start session. Ensure the instance is running and has SSM enabled."
+        return 1
+    fi
+}
+
 function list_ec2_instances() {
     if [ -z "$AWS_PROFILE" ]; then
         echo "Please set the AWS_PROFILE environment variable before running this command."
@@ -253,3 +315,122 @@ function list_ec2_instances() {
     echo "Listing EC2 instances in profile: $AWS_PROFILE"
     aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags[?Key=='Name'].Value | [0]]" --output table
 }
+
+function list_rds_clusters() {
+    if [ -z "$AWS_PROFILE" ]; then
+        echo "Please set the AWS_PROFILE environment variable before running this command."
+        return 1
+    fi
+    echo "Listing RDS clusters in profile: $AWS_PROFILE"
+    aws rds describe-db-clusters --query "DBClusters[*].[DBClusterIdentifier,Status,Engine,EngineVersion,Endpoint]" --output table
+}
+
+function list_rds_instances() {
+    if [ -z "$AWS_PROFILE" ]; then
+        echo "Please set the AWS_PROFILE environment variable before running this command."
+        return 1
+    fi
+    echo "Listing RDS instances in profile: $AWS_PROFILE"
+    aws rds describe-db-instances --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,Engine,DBInstanceStatus,Endpoint.Address]" --output table
+}
+
+function display_monitoring_mode_for_rds () {
+    if [ -z "$1" ]; then
+        echo "Usage: display_monitoring_mode_for_rds <DBInstanceIdentifier>"
+        return 1
+    fi
+
+    #local DB_INSTANCE_ID="$1"
+    local DB_CLUSTER_ID="$1"
+    
+    echo "Displaying monitoring mode for RDS cluster: $DB_CLUSTER_ID"
+    
+    #aws rds describe-db-instances \
+  #--query "DBInstances[?DBClusterIdentifier=='${DB_CLUSTER_ID}'].[DBInstanceIdentifier, MonitoringInterval]" \
+  #--output table
+
+    aws rds describe-db-instances \
+    --query "DBInstances[?DBClusterIdentifier=='${DB_CLUSTER_ID}'].[DBInstanceIdentifier, MonitoringInterval, MonitoringRoleArn, Engine, AvailabilityZone, Endpoint.Address ]" \
+    --output table
+
+
+    # Get the writer's actual instance ID
+    WRITER_ID=$(aws rds describe-db-clusters \
+    --db-cluster-identifier "$CLUSTER_ID" \
+    --query "DBClusters[0].DBClusterMembers[?IsClusterWriter==\`true\`].DBInstanceIdentifier" \
+    --output text)
+
+    aws rds describe-db-instances \
+  --query "DBInstances[?DBClusterIdentifier=='$DB_CLUSTER_ID'].[DBInstanceIdentifier, MonitoringInterval, MonitoringRoleArn]" \
+  --output json | jq -r --arg WRITER "$WRITER_ID" '
+    .[] | 
+    "\(.0)\t" + 
+    (if .0 == $WRITER then "Writer" else "Reader" end) + "\t" + 
+    "Interval: \(.1)\tRole: \(.2)"
+  '
+
+}
+
+function aurora_display_engine_version() {
+    if [ -z "$1" ]; then
+        echo "Usage: aurora_display_engine_version <DBClusterIdentifier>"
+        return 1
+    fi
+
+    local DB_CLUSTER_ID="$1"
+    
+    echo "Displaying engine version for Aurora cluster: $DB_CLUSTER_ID"
+    
+    aws rds describe-db-clusters \
+    --db-cluster-identifier "$DB_CLUSTER_ID" \
+    --query "DBClusters[0].[Engine, EngineVersion]" \
+    --output table
+}
+
+function aurora_display_engine_versions_all() {
+    echo "Displaying engine versions for all Aurora clusters"
+    
+    set -x
+    aws rds describe-db-clusters \
+    --query "DBClusters[*].[DBClusterIdentifier, Engine, EngineVersion]" \
+    --output table
+    set +x
+}
+
+function aurora_display_full_engine_versions_all() {
+    echo "Displaying full engine versions (including minor) for all Aurora clusters"
+    
+    set -x
+    aws rds describe-db-clusters \
+    --query "DBClusters[*].[DBClusterIdentifier, Engine, EngineVersion, DBClusterParameterGroup, DBSubnetGroup, VpcId, EngineVersion]" \
+    --output table
+    set +x
+}   
+
+function aurora_display_last_onehour_events() {
+    if [ -z "$1" ]; then
+        echo "Usage: aurora_display_last_onehour_events <DBClusterIdentifier>"
+        aurora_list_all_clusters
+        return 1
+    fi
+
+    local DB_CLUSTER_ID="$1"
+    
+    echo "Displaying events from the last hour for Aurora cluster: $DB_CLUSTER_ID"
+    
+    aws rds describe-events \
+    --source-identifier "$DB_CLUSTER_ID" \
+    --source-type db-cluster \
+    --start-time "$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)" \
+    --end-time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --query "Events[].[Date, Message]" \
+    --output table
+}   
+
+function aurora_list_all_clusters() {
+    echo "Listing all Aurora clusters"
+    
+    aws rds describe-db-clusters \
+    --query "DBClusters[*].[DBClusterIdentifier, Status, Engine, EngineVersion, Endpoint]" \
+    --output table
+}  

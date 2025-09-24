@@ -1,0 +1,4 @@
+#!/bin/bash -x
+
+source /Users/schiambaram.ctr/kcs/prod/prod-ods
+./pg_get_sessions_with_longer_idle_in_txn.py ~/kcs/logs/pg_get_sessions_with_longer_idle_in_txn.log
