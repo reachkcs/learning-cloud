@@ -16,6 +16,12 @@ function stop-dms-task() {
     aws dms stop-replication-task --replication-task-arn "$TASK_ID"
 }
 
+function stop_prod_dms_tasks2() {
+    echo "Copy and paste the following commands to stop all production DMS tasks:";echo
+    dms-desc-rep-tasks | grep prod | grep running | awk -F"\|" '{print "stop-dms-task "$3}'
+    echo
+}
+
 function stop_prod_dms_tasks() {
     cat <<EOF
     Copy and paste the following commands to stop all production DMS tasks:
@@ -36,6 +42,12 @@ start-dms-task arn:aws:dms:us-east-1:502397910358:task:MMESGF6GMIUZZONQCZD4IZWD6
 start-dms-task arn:aws:dms:us-east-1:502397910358:task:T2RQJK6CHNCTSWPHNDHP3BJJDEECEU5QNF6INQQ
 start-dms-task arn:aws:dms:us-east-1:502397910358:task:AJ6PQLVSNBNKDTFMQFGFCB44WOZPZ2LCARY64DY
 EOF
+}
+
+function stop_sbx_dms_task2() {
+    echo "Copy and paste the following commands to stop all sandbox DMS tasks:";echo
+    dms-desc-rep-tasks | grep sbx | grep running | awk -F"\|" '{print "stop-dms-task "$3}'
+    echo
 }
 
 function stop_sbx_dms_task() {
@@ -285,13 +297,12 @@ function connect_ec2() {
 
 function ec2_connect() {
     echo "Available EC2 instances:"
-    #list_ec2_instances | grep -i dms | awk 'NR>2 {print NR-2 ") " $1 " - " $3}' | grep -v '^$'
-    list_ec2_instances | grep -i dms | awk 'NR>2 {print NR-2 ") " $1 " - " $2}' | grep -v '^$'
+    list_ec2_instances | egrep 'i-03cebdfe91bc55e6f|i-030980ccbda36e97b' | awk '{print $2" "$6}' | awk '{print NR ") " $0}' | grep -v '^$'
     
     echo
     read -p "Enter the number of the EC2 instance to connect: " CHOICE
 
-    INSTANCE_ID=$(list_ec2_instances | grep -i dms | awk 'NR>2 {print $1}' | sed -n "${CHOICE}p")
+    INSTANCE_ID=$(list_ec2_instances | egrep 'i-03cebdfe91bc55e6f|i-030980ccbda36e97b' | awk '{print $2}' | grep -v '^$' | sed -n "${CHOICE}p")
 
     if [ -z "$INSTANCE_ID" ]; then
         echo "Invalid selection."
