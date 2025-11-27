@@ -278,16 +278,55 @@ function switch_pg() {
 function connect_ec2() {
     if [ -z "$1" ]; then
         echo "Usage: connect_ec2 <instance-id>"
-        echo "If you are looking for DMS EC2s, here they are:"
-        list_ec2_instances  | grep -i dms
+        echo "If you are looking for Database EC2s, here they are:"
+        list_ec2_instances  | egrep -i 'dms|postgres'
         return 1
     fi
 
     local INSTANCE_ID="$1"
     
     echo "Connecting to EC2 instance: $INSTANCE_ID via SSM..."
-    
+
     aws ssm start-session --target "$INSTANCE_ID"
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to start session. Ensure the instance is running and has SSM enabled."
+        return 1
+    fi
+}
+
+function connect_ec2_2() {
+    # Build a selectable list of EC2 instances (InstanceId and Name) matching dms|postgres
+    mapfile -t INSTANCE_LINES < <(
+        aws ec2 describe-instances \
+            --query "Reservations[*].Instances[*].[InstanceId, Tags[?Key=='Name'].Value | [0]]" \
+            --output text 2>/dev/null | egrep -i 'dms|postgres' || true
+    )
+
+    if [ ${#INSTANCE_LINES[@]} -eq 0 ]; then
+        echo "No EC2 instances matching 'dms' or 'postgres' were found."
+        return 1
+    fi
+
+    echo "Select an EC2 instance to connect:"
+    for i in "${!INSTANCE_LINES[@]}"; do
+        idx=$((i+1))
+        # Print: " 1) i-0123456789abcdef  Name-of-instance"
+        printf "%2d) %s\n" "$idx" "${INSTANCE_LINES[$i]}"
+    done
+
+    read -p "Enter selection number: " SEL
+
+    if ! [[ "$SEL" =~ ^[0-9]+$ ]] || [ "$SEL" -lt 1 ] || [ "$SEL" -gt "${#INSTANCE_LINES[@]}" ]; then
+        echo "Invalid selection."
+        return 1
+    fi
+
+    # Extract the InstanceId (first field) from the selected line
+    INSTANCE_ID=$(printf "%s\n" "${INSTANCE_LINES[$((SEL-1))]}" | awk '{print $1}')
+    echo "Selected instance: $INSTANCE_ID"
+    
+    #aws ssm start-session --target "$INSTANCE_ID"
 
     if [ $? -ne 0 ]; then
         echo "Failed to start session. Ensure the instance is running and has SSM enabled."
