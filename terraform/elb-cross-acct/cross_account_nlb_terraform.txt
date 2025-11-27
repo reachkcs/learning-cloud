@@ -1,0 +1,19 @@
+# ============================================================================
+# Terraform: Cross‑Account NLB → S3 Access‑Logging
+# ----------------------------------------------------------------------------
+# This single textdoc shows a *two‑workspace* layout:
+#   account‑a/  – VPC, two Nginx EC2 instances, Network Load Balancer (NLB)
+#                 with access‑logs shipped to an S3 bucket **in another AWS
+#                 account**.
+#   account‑b/  – S3 bucket and bucket‑policy that trusts the ELB log‑delivery
+#                 service account *and* the source AWS account.
+#
+# ‑‑‑ HOW TO USE  -------------------------------------------------------------
+# 1.  In Account B, initialise Terraform in account‑b/ and apply.  This creates
+#     the log bucket + policy.
+# 2.  In Account A, update variables (bucket name, bucket‑owner account‑id,
+#     key‑pair, etc.), then terraform init && terraform apply from account‑a/.
+#
+# Both directories are completely standalone so they can live in separate
+# Git repos / CI pipelines if you like.
+# ============================================================================
