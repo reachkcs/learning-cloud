@@ -1,0 +1,12 @@
+uv init day1
+cd day1
+uv venv
+source .venv/bin/activate
+Install packages from pyproject.toml or requirements.txt
+uv pip install # Installs dependencies listed in pyproject.toml
+uv pip install -r requirements.txt
+uv add requests -- Install a new package and add it to pyproject.toml
+uv remove numpy -- Remove a package and update pyproject.toml
+uv pip compile pyproject.toml -o requirements.txt -- Generate a lock file for reproducible builds
+uv pip sync requirements.txt -- Sync environment with a Lock file (replaces pip-sync)
+uv run python kaggle.py -- Running scripts

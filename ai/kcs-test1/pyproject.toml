@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kcs-test1"
+version = "0.1.0"
+description = "Chatbot with LangChain, Streamlit, FastAPI, and Pydantic"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=0.1.0",
+    "langchain-openai>=0.0.5",
+    "langchain-anthropic>=0.1.0",
+    "streamlit>=1.28.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.5.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.25.0",
+]
+
+[tool.setuptools]
+py-modules = ["api", "agent", "models", "main", "streamlit_app"]
