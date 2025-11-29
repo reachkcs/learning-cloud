@@ -1,4 +1,4 @@
-# AI Chatbot with LangChain, Streamlit, FastAPI, and Pydantic
+# Sreedhar's Chatbot with LangChain, Streamlit, FastAPI, and Pydantic
 
 A multi-component chatbot application that allows users to submit questions, select LLM models, and view top results from the language model.
 

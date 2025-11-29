@@ -5,13 +5,13 @@ from agent import AVAILABLE_MODELS
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Chatbot",
+    page_title="Sreedhar's Chatbot",
     page_icon="🤖",
     layout="wide"
 )
 
 # Title
-st.title("🤖 AI Chatbot")
+st.title("🤖 Sreedhar's Chatbot")
 st.markdown("Ask a question and get top results from your selected LLM model")
 
 # Initialize session state

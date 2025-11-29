@@ -5,7 +5,7 @@ from models import ChatRequest, ChatResponse, ChatResult
 from agent import get_multiple_responses, AVAILABLE_MODELS
 import uvicorn
 
-app = FastAPI(title="Chatbot API", version="1.0.0")
+app = FastAPI(title="Sreedhar's Chatbot API", version="1.0.0")
 
 # Enable CORS for Streamlit frontend
 app.add_middleware(
@@ -21,7 +21,7 @@ app.add_middleware(
 async def root():
     """Root endpoint."""
     return {
-        "message": "Chatbot API",
+        "message": "Sreedhar's Chatbot API",
         "available_models": list(AVAILABLE_MODELS.keys())
     }
 
